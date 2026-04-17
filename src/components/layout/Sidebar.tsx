@@ -44,7 +44,7 @@ export default function Sidebar({ collapsed, onToggle, onClose }: SidebarProps) 
   return (
     <aside
       className={cn(
-        'sidebar fixed top-0 left-0 h-screen flex flex-col z-40',
+        'sidebar h-full min-h-screen flex flex-col z-40',
         collapsed && 'collapsed'
       )}
     >

@@ -27,13 +27,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar - Desktop */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block fixed inset-y-0 left-0 z-40">
         <Sidebar
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -42,9 +42,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar - Mobile */}
       <div
-        className={`lg:hidden fixed inset-y-0 left-0 z-40 transition-transform duration-300 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className="lg:hidden fixed inset-y-0 left-0 z-50 w-[272px] bg-brand-900 transition-transform duration-300"
+        style={{ transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)' }}
       >
         <Sidebar
           collapsed={false}
