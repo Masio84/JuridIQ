@@ -59,6 +59,16 @@ export default function CitasPage() {
           <p className="text-sm text-slate-500 mt-1">{mockCitas.length} citas programadas</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.origin + '/agendar');
+              alert('Enlace de autoagendado público copiado al portapapeles');
+            }}
+            className="btn btn-secondary hidden sm:flex"
+            title="Copiar enlace público para clientes"
+          >
+            📋 Compartir Enlace
+          </button>
           <div className="flex bg-white border border-slate-200 rounded-lg p-0.5">
             {(['lista', 'semana'] as ViewMode[]).map((v) => (
               <button
