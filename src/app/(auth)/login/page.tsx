@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Scale, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,15 +19,41 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // Mock login - will be replaced with Supabase auth
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const isMockMode =
+      !supabaseUrl ||
+      !supabaseKey ||
+      supabaseUrl.includes('your-project') ||
+      supabaseKey.includes('your-anon-key');
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // For demo, accept any email/password
-      if (email && password) {
-        router.push('/dashboard');
+      if (isMockMode) {
+        // Modo Demo (Mock)
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (email && password) {
+          router.push('/dashboard');
+          router.refresh();
+        } else {
+          setError('Por favor ingresa tu email y contraseña.');
+        }
       } else {
-        setError('Por favor ingresa tu email y contraseña.');
+        // Login Real conectando con Supabase
+        const supabase = createBrowserClient(supabaseUrl, supabaseKey);
+        
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) {
+          setError('Credenciales incorrectas o usuario no registrado.');
+          console.error('Supabase auth error:', authError.message);
+        } else if (data.session) {
+          router.push('/dashboard');
+          router.refresh();
+        }
       }
     } catch {
       setError('Error al iniciar sesión. Intenta de nuevo.');
