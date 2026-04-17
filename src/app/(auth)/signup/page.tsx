@@ -90,7 +90,7 @@ export default function SignupPage() {
                 type="text"
                 value={formData.nombre}
                 onChange={(e) => updateField('nombre', e.target.value)}
-                className="input pl-10"
+                className="input !pl-10"
                 placeholder="Lic. Juan Pérez"
                 required
               />
@@ -108,7 +108,7 @@ export default function SignupPage() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => updateField('email', e.target.value)}
-                className="input pl-10"
+                className="input !pl-10"
                 placeholder="tu@despacho.com"
                 required
               />
@@ -126,7 +126,7 @@ export default function SignupPage() {
                 type="text"
                 value={formData.nombreDespacho}
                 onChange={(e) => updateField('nombreDespacho', e.target.value)}
-                className="input pl-10"
+                className="input !pl-10"
                 placeholder="García & Asociados"
                 required
               />
@@ -145,7 +145,7 @@ export default function SignupPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => updateField('password', e.target.value)}
-                  className="input pl-10"
+                  className="input !pl-10"
                   placeholder="••••••••"
                   required
                   minLength={8}
@@ -163,7 +163,7 @@ export default function SignupPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={(e) => updateField('confirmPassword', e.target.value)}
-                  className="input pl-10"
+                  className="input !pl-10"
                   placeholder="••••••••"
                   required
                 />

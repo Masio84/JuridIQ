@@ -51,7 +51,7 @@ export default function Topbar({ onMenuClick, title }: TopbarProps) {
                 <input
                   type="text"
                   placeholder="Buscar clientes, expedientes..."
-                  className="input pl-9 pr-4 w-64 text-sm"
+                  className="input !pl-9 pr-4 w-64 text-sm"
                   autoFocus
                   onBlur={() => setShowSearch(false)}
                 />
