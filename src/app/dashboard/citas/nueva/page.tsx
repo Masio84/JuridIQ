@@ -65,15 +65,15 @@ export default function NuevaCitaPage() {
       despacho_id: profile.despacho_id,
       titulo_asunto: formData.get('titulo_asunto') as string,
       abogado_id: formData.get('abogado_id') as string,
-      cliente_id: formData.get('cliente_id') as string || null,
-      nombre_publico: null, // As it is not public auto-schedule
-      email_publico: null,
-      telefono_publico: null,
+      cliente_id: (formData.get('cliente_id') as string) || undefined,
+      nombre_publico: undefined, // As it is not public auto-schedule
+      email_publico: undefined,
+      telefono_publico: undefined,
       fecha_hora: new Date(formData.get('fecha_hora') as string).toISOString(),
       duracion_minutos: parseInt(formData.get('duracion_minutos') as string),
       tipo_cita: formData.get('tipo_cita') as any,
-      enlace_zoom: formData.get('enlace_reunion') as string || null,
-      descripcion_cliente: formData.get('notas') as string || null,
+      enlace_zoom: (formData.get('enlace_reunion') as string) || undefined,
+      descripcion_cliente: (formData.get('notas') as string) || undefined,
       confirmada: true, // Internal creation usually means confirmed
       enviado_recordatorio: false,
     };

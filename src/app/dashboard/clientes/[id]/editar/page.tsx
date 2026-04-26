@@ -56,16 +56,16 @@ export default function EditarClientePage({ params }: { params: Promise<{ id: st
     
     const formData = new FormData(e.currentTarget);
     
-    const updates = {
+    const updates: Partial<Cliente> = {
       nombre_completo: formData.get('nombre_completo') as string,
       email: formData.get('email') as string,
       telefono: formData.get('telefono') as string,
-      tipo_identificacion: formData.get('tipo_identificacion') as string || null,
-      numero_identificacion: formData.get('numero_identificacion') as string || null,
-      domicilio: formData.get('domicilio') as string || null,
-      abogado_asignado_id: formData.get('abogado_asignado_id') as string || null,
-      estado: formData.get('estado') as string,
-      notas_generales: formData.get('notas_generales') as string || null,
+      tipo_identificacion: (formData.get('tipo_identificacion') as string) || undefined,
+      numero_identificacion: (formData.get('numero_identificacion') as string) || undefined,
+      domicilio: (formData.get('domicilio') as string) || undefined,
+      abogado_asignado_id: (formData.get('abogado_asignado_id') as string) || undefined,
+      estado: formData.get('estado') as any,
+      notas_generales: (formData.get('notas_generales') as string) || undefined,
     };
 
     const { error: submitError } = await updateCliente(id, updates);

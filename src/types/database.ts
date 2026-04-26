@@ -48,11 +48,11 @@ export interface Cliente {
   nombre_completo: string;
   email: string;
   telefono: string;
-  tipo_identificacion: string;
-  numero_identificacion: string;
-  domicilio: string;
+  tipo_identificacion?: string;
+  numero_identificacion?: string;
+  domicilio?: string;
   notas_generales?: string;
-  abogado_asignado_id: string;
+  abogado_asignado_id?: string;
   fecha_registro: string;
   estado: EstadoCliente;
   // Joined fields

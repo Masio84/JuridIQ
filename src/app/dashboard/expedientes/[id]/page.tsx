@@ -89,16 +89,16 @@ export default function ExpedienteDetailPage({ params }: { params: Promise<{ id:
     
     const maxOrden = expediente?.tareas?.reduce((max, t) => Math.max(max, t.orden), 0) || 0;
 
-    const nuevaTarea = {
+    const nuevaTarea: any = {
       expediente_id: id,
       titulo: formData.get('titulo') as string,
-      descripcion: formData.get('descripcion') as string || null,
-      responsable_id: formData.get('responsable_id') as string || null,
+      descripcion: (formData.get('descripcion') as string) || undefined,
+      responsable_id: (formData.get('responsable_id') as string) || undefined,
       fecha_limite: new Date(formData.get('fecha_limite') as string).toISOString(),
       estado: 'pendiente',
       prioridad: formData.get('prioridad') as string,
       orden: maxOrden + 1,
-      fecha_completada: null
+      fecha_completada: undefined
     };
 
     const { error } = await createTarea(nuevaTarea);

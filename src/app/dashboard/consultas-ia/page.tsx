@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   BrainCircuit, Send, Loader2, Copy, BookmarkPlus, Share2,
-  Clock, Search, ChevronDown, Sparkles, Check
+  Clock, Search, ChevronDown, Sparkles, Check, FolderOpen
 } from 'lucide-react';
 import { cn, formatFecha, getInitials } from '@/lib/utils';
 import { createBrowserClient } from '@supabase/ssr';

@@ -64,16 +64,16 @@ export default function EditarExpedientePage({ params }: { params: Promise<{ id:
     const monto = formData.get('monto_demanda') as string;
     const fecha = formData.get('fecha_proxima_audiencia') as string;
 
-    const updates = {
+    const updates: Partial<Expediente> = {
       titulo: formData.get('titulo') as string,
       cliente_id: formData.get('cliente_id') as string,
-      tipo_caso: formData.get('tipo_caso') as string,
+      tipo_caso: formData.get('tipo_caso') as any,
       abogado_responsable_id: formData.get('abogado_responsable_id') as string,
-      estado_caso: formData.get('estado_caso') as string,
-      numero_expediente: formData.get('numero_expediente') as string || null,
-      juzgado: formData.get('juzgado') as string || null,
-      monto_demanda: monto ? parseFloat(monto) : null,
-      fecha_proxima_audiencia: fecha ? new Date(fecha).toISOString() : null,
+      estado_caso: formData.get('estado_caso') as any,
+      numero_expediente: (formData.get('numero_expediente') as string) || undefined,
+      juzgado: (formData.get('juzgado') as string) || undefined,
+      monto_demanda: monto ? parseFloat(monto) : undefined,
+      fecha_proxima_audiencia: fecha ? new Date(fecha).toISOString() : undefined,
       descripcion_inicial: formData.get('descripcion_inicial') as string,
     };
 
