@@ -67,8 +67,8 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
       fecha_hora: new Date(formData.get('fecha_hora') as string).toISOString(),
       duracion_minutos: parseInt(formData.get('duracion_minutos') as string),
       tipo_cita: formData.get('tipo_cita') as any,
-      enlace_reunion: (formData.get('enlace_reunion') as string) || undefined,
-      notas: (formData.get('notas') as string) || undefined,
+      enlace_zoom: (formData.get('enlace_reunion') as string) || undefined,
+      descripcion_cliente: (formData.get('notas') as string) || undefined,
       confirmada: formData.get('confirmada') === 'on',
     };
 
@@ -182,13 +182,13 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Enlace Zoom/Meet</label>
-              <input name="enlace_reunion" type="url" className="input" defaultValue={cita.enlace_reunion || ''} placeholder="https://zoom.us/j/..." />
+              <input name="enlace_reunion" type="url" className="input" defaultValue={cita.enlace_zoom || ''} placeholder="https://zoom.us/j/..." />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Descripción / Notas</label>
-            <textarea name="notas" className="input min-h-[80px] resize-y" defaultValue={cita.notas || ''} placeholder="Notas sobre la cita..." />
+            <textarea name="notas" className="input min-h-[80px] resize-y" defaultValue={cita.descripcion_cliente || ''} placeholder="Notas sobre la cita..." />
           </div>
 
           <label className="flex items-center gap-2">

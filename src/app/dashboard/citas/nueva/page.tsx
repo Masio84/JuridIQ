@@ -72,9 +72,10 @@ export default function NuevaCitaPage() {
       fecha_hora: new Date(formData.get('fecha_hora') as string).toISOString(),
       duracion_minutos: parseInt(formData.get('duracion_minutos') as string),
       tipo_cita: formData.get('tipo_cita') as any,
-      enlace_reunion: formData.get('enlace_reunion') as string || null,
-      notas: formData.get('notas') as string || null,
+      enlace_zoom: formData.get('enlace_reunion') as string || null,
+      descripcion_cliente: formData.get('notas') as string || null,
       confirmada: true, // Internal creation usually means confirmed
+      enviado_recordatorio: false,
     };
 
     const { error: submitError } = await createCita(nuevaCita);
