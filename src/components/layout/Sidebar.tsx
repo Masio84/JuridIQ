@@ -14,9 +14,10 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ShieldAlert,
 } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
-import { mockCurrentUser, mockDespacho } from '@/lib/mock-data';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -35,6 +36,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { profile, isSuperAdmin, signOut } = useAuth();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -75,6 +77,25 @@ export default function Sidebar({ collapsed, onToggle, onClose }: SidebarProps) 
             Menú Principal
           </div>
         )}
+        
+        {isSuperAdmin && (
+          <div className="mb-4">
+            <Link
+              href="/dashboard/solicitudes"
+              onClick={onClose}
+              className={cn(
+                'sidebar-nav-item border border-red-500/30 bg-red-500/10 text-red-100 hover:bg-red-500/20 hover:text-white',
+                isActive('/dashboard/solicitudes') && 'active !bg-red-500/30',
+                collapsed && 'justify-center px-0'
+              )}
+              title={collapsed ? 'Panel Superadmin' : undefined}
+            >
+              <ShieldAlert className="w-5 h-5 flex-shrink-0" />
+              {!collapsed && <span>Panel Superadmin</span>}
+            </Link>
+          </div>
+        )}
+
         {navItems.map((item) => (
           <Link
             key={item.href}
@@ -115,7 +136,8 @@ export default function Sidebar({ collapsed, onToggle, onClose }: SidebarProps) 
             collapsed && 'justify-center px-0'
           )}
           title={collapsed ? 'Cerrar Sesión' : undefined}
-          onClick={() => {
+          onClick={async () => {
+            await signOut();
             window.location.href = '/login';
           }}
         >
@@ -124,18 +146,18 @@ export default function Sidebar({ collapsed, onToggle, onClose }: SidebarProps) 
         </button>
 
         {/* User info */}
-        {!collapsed && (
+        {!collapsed && profile && (
           <div className="mt-3 px-3 py-3 rounded-lg bg-white/5 border border-white/10">
             <div className="flex items-center gap-3">
               <div className="avatar avatar-sm bg-blue-600/30 text-blue-300">
-                {getInitials(mockCurrentUser.nombre_completo)}
+                {getInitials(profile.nombre_completo)}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-white truncate">
-                  {mockCurrentUser.nombre_completo.split(' ').slice(0, 3).join(' ')}
+                  {profile.nombre_completo.split(' ').slice(0, 3).join(' ')}
                 </div>
-                <div className="text-xs text-slate-400 truncate">
-                  {mockDespacho.nombre_despacho}
+                <div className="text-xs text-slate-400 truncate capitalize">
+                  {profile.role.replace('_', ' ')}
                 </div>
               </div>
             </div>

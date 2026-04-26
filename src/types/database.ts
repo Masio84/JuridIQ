@@ -180,3 +180,15 @@ export interface Notificacion {
   fecha_envio?: string;
   fecha_creacion: string;
 }
+
+export interface SolicitudRegistro {
+  id: string;
+  nombre_completo: string;
+  email: string;
+  telefono?: string;
+  nombre_despacho: string;
+  plan_interes: string;
+  estado: 'pendiente' | 'aprobada' | 'rechazada';
+  fecha_solicitud: string;
+  notas_admin?: string;
+}
