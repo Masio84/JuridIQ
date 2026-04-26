@@ -3,7 +3,7 @@
 // ============================================================
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Scale, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
@@ -28,7 +28,7 @@ function getErrorMessage(msg: string): string {
   return 'Error al iniciar sesión. Verifica tus datos e intenta de nuevo.';
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/dashboard';
@@ -175,5 +175,13 @@ export default function LoginPage() {
         <a href="#" className="underline hover:text-slate-600">Política de Privacidad</a>.
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

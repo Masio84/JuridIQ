@@ -429,14 +429,14 @@ export default function ExpedienteDetailPage({ params }: { params: Promise<{ id:
             ) : (
               <div className="space-y-2">
                 {documentos.map((doc) => (
-                  <div key={doc.documento_id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => handleDownloadDoc(doc.ruta_storage)}>
+                  <div key={doc.doc_id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => handleDownloadDoc(doc.ruta_storage)}>
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
                         <FileText className="w-5 h-5 text-red-500" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-slate-900 truncate hover:text-blue-600">{doc.nombre_archivo}</div>
-                        <div className="text-xs text-slate-400">{doc.tipo_documento} · {(doc.tamano_bytes / 1024 / 1024).toFixed(2)} MB</div>
+                        <div className="text-xs text-slate-400">{doc.tipo_documento} · {doc.tamano_bytes ? (doc.tamano_bytes / 1024 / 1024).toFixed(2) : '0.00'} MB</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
