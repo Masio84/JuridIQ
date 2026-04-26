@@ -27,8 +27,8 @@ CREATE POLICY "Superadmins pueden ver solicitudes"
   ON public.solicitudes_registro FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM perfiles
-      WHERE perfiles.id = auth.uid() AND perfiles.role = 'superadmin'
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'superadmin'
     )
   );
 
@@ -36,8 +36,8 @@ CREATE POLICY "Superadmins pueden actualizar solicitudes"
   ON public.solicitudes_registro FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM perfiles
-      WHERE perfiles.id = auth.uid() AND perfiles.role = 'superadmin'
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'superadmin'
     )
   );
 
