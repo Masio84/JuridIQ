@@ -60,15 +60,15 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
     
     const formData = new FormData(e.currentTarget);
     
-    const updates = {
+    const updates: Partial<Cita> = {
       titulo_asunto: formData.get('titulo_asunto') as string,
       abogado_id: formData.get('abogado_id') as string,
-      cliente_id: formData.get('cliente_id') as string || null,
+      cliente_id: (formData.get('cliente_id') as string) || undefined,
       fecha_hora: new Date(formData.get('fecha_hora') as string).toISOString(),
       duracion_minutos: parseInt(formData.get('duracion_minutos') as string),
-      tipo_cita: formData.get('tipo_cita') as string,
-      enlace_reunion: formData.get('enlace_reunion') as string || null,
-      notas: formData.get('notas') as string || null,
+      tipo_cita: formData.get('tipo_cita') as any,
+      enlace_reunion: (formData.get('enlace_reunion') as string) || undefined,
+      notas: (formData.get('notas') as string) || undefined,
       confirmada: formData.get('confirmada') === 'on',
     };
 
