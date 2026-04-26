@@ -11,9 +11,11 @@ import {
   ArrowRight,
   CheckCircle2,
   Zap,
-  BarChart3,
   Bell,
-  Star,
+  Lock,
+  BarChart3,
+  Clock,
+  FileText,
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -30,16 +32,19 @@ export default function LandingPage() {
               <span className="text-xl font-bold text-slate-900">
                 Jurid<span className="text-blue-600">IQ</span>
               </span>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200 ml-1">
+                BETA
+              </span>
             </div>
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+              <a href="#funciones" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
                 Funciones
               </a>
-              <a href="#pricing" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+              <a href="#planes" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
                 Planes
               </a>
-              <a href="#testimonials" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-                Testimonios
+              <a href="#seguridad" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                Seguridad
               </a>
             </div>
             <div className="flex items-center gap-3">
@@ -47,7 +52,7 @@ export default function LandingPage() {
                 Iniciar Sesión
               </Link>
               <Link href="/signup" className="btn btn-primary btn-sm">
-                Comenzar Gratis
+                Solicitar Acceso
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -57,7 +62,6 @@ export default function LandingPage() {
 
       {/* ---- HERO ---- */}
       <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* Background decoration */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-blue-50 to-transparent rounded-full blur-3xl opacity-60" />
           <div className="absolute top-20 right-10 w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-30 animate-float" />
@@ -66,9 +70,9 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium mb-6 animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium mb-6 animate-fade-in">
               <Zap className="w-4 h-4" />
-              Potenciado con Inteligencia Artificial
+              Plataforma en acceso anticipado (Beta)
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 leading-tight tracking-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
@@ -80,37 +84,36 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              Centraliza expedientes, agenda citas, gestiona clientes y consulta leyes con IA.
-              Todo lo que tu despacho necesita en una sola plataforma.
+              Plataforma SaaS para despachos jurídicos mexicanos. Gestiona expedientes, agenda citas, administra clientes y consulta leyes con inteligencia artificial — todo en un solo lugar seguro.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <Link href="/signup" className="btn btn-primary btn-lg w-full sm:w-auto shadow-lg shadow-blue-500/25">
-                Prueba Gratis 14 Días
+                Solicitar Acceso Beta
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <a href="#features" className="btn btn-secondary btn-lg w-full sm:w-auto">
-                Ver Funciones
-              </a>
+              <Link href="/login" className="btn btn-secondary btn-lg w-full sm:w-auto">
+                Ya tengo cuenta
+              </Link>
             </div>
 
-            <div className="flex items-center justify-center gap-6 mt-8 text-sm text-slate-500 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-8 text-sm text-slate-500 animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                Sin tarjeta de crédito
+                Multi-tenant seguro
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                Setup en 5 minutos
+                IA especializada en derecho mexicano
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                Soporte incluido
+                Datos cifrados en reposo
               </span>
             </div>
           </div>
 
-          {/* Dashboard Preview */}
+          {/* Dashboard Preview — estático, sin datos reales */}
           <div className="mt-16 max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: '0.5s' }}>
             <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-2xl shadow-slate-900/10">
               <div className="bg-slate-800 px-4 py-3 flex items-center gap-2">
@@ -119,66 +122,66 @@ export default function LandingPage() {
                   <div className="w-3 h-3 rounded-full bg-amber-400" />
                   <div className="w-3 h-3 rounded-full bg-emerald-400" />
                 </div>
-                <div className="flex-1 text-center text-xs text-slate-400">app.juridiq.com</div>
+                <div className="flex-1 text-center text-xs text-slate-400">app.juridiq.mx — Dashboard</div>
               </div>
               <div className="bg-gradient-to-b from-slate-50 to-white p-6 sm:p-8">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                   {[
-                    { label: 'Clientes Activos', value: '24', color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Expedientes Abiertos', value: '18', color: 'text-amber-600', bg: 'bg-amber-50' },
-                    { label: 'Citas Hoy', value: '5', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                    { label: 'Consultas IA', value: '142', color: 'text-purple-600', bg: 'bg-purple-50' },
+                    { label: 'Clientes Activos', icon: '👥', color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: 'Expedientes Abiertos', icon: '📁', color: 'text-amber-600', bg: 'bg-amber-50' },
+                    { label: 'Citas de Hoy', icon: '📅', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                    { label: 'Consultas IA', icon: '🧠', color: 'text-purple-600', bg: 'bg-purple-50' },
                   ].map((stat) => (
                     <div key={stat.label} className={`${stat.bg} rounded-lg p-4 border border-slate-100`}>
-                      <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                      <div className="text-xs text-slate-500 mt-1">{stat.label}</div>
+                      <div className="text-2xl mb-1">{stat.icon}</div>
+                      <div className="text-xs text-slate-500">{stat.label}</div>
                     </div>
                   ))}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="rounded-lg bg-white border border-slate-200 p-4">
-                    <div className="text-sm font-semibold text-slate-700 mb-3">Citas de Hoy</div>
+                    <div className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      Agenda del Día
+                    </div>
                     <div className="space-y-2">
-                      {['10:00 - Juan Pérez (Fiscal)', '14:30 - María García (Civil)', '16:00 - ETN S.A. (Mercantil)'].map((cita) => (
+                      {['10:00 — Consulta inicial (Presencial)', '14:30 — Seguimiento de expediente (Virtual)', '16:00 — Firma de contrato (Presencial)'].map((cita) => (
                         <div key={cita} className="flex items-center gap-2 text-sm text-slate-600 px-3 py-2 rounded-md bg-slate-50">
-                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                           {cita}
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="rounded-lg bg-white border border-slate-200 p-4">
-                    <div className="text-sm font-semibold text-slate-700 mb-3">Tareas Urgentes</div>
-                    <div className="space-y-2">
-                      {[
-                        { task: 'Recurso de revocación SAT', date: 'Vence 25 Abr' },
-                        { task: 'Alegatos custodia', date: 'Vence 27 Abr' },
-                        { task: 'Demanda mercantil', date: 'Vence 1 May' },
-                      ].map((t) => (
-                        <div key={t.task} className="flex items-center justify-between text-sm px-3 py-2 rounded-md bg-slate-50">
-                          <span className="text-slate-600">{t.task}</span>
-                          <span className="text-xs text-red-500 font-medium">{t.date}</span>
-                        </div>
-                      ))}
+                    <div className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                      <BrainCircuit className="w-4 h-4 text-purple-500" />
+                      Última Consulta IA
+                    </div>
+                    <div className="p-3 rounded-md bg-slate-50 text-sm text-slate-600">
+                      <p className="font-medium text-slate-700 mb-1">¿Cuáles son los plazos de prescripción en materia fiscal?</p>
+                      <p className="text-xs text-slate-400">Respuesta con fuentes del CFF, SCJN y tesis jurisprudenciales →</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+            <p className="text-center text-xs text-slate-400 mt-3">
+              Vista previa del dashboard — los datos se cargan desde tu despacho
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ---- FEATURES ---- */}
-      <section id="features" className="py-24 bg-slate-50">
+      {/* ---- FUNCIONES ---- */}
+      <section id="funciones" className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
               Todo lo que tu despacho necesita
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Desde la gestión de expedientes hasta consultas legales con IA,
-              JuridIQ tiene cada herramienta para ser más productivo.
+              JuridIQ centraliza la operación completa de tu despacho en una sola plataforma, con seguridad de nivel empresarial.
             </p>
           </div>
 
@@ -187,38 +190,56 @@ export default function LandingPage() {
               {
                 icon: FolderOpen,
                 title: 'Expedientes Digitales',
-                description: 'Gestiona todos tus casos con timeline de eventos, documentos adjuntos y cronograma de tareas en un solo lugar.',
+                description: 'Gestiona todos tus casos con timeline de eventos, documentos adjuntos (PDF, Word, imágenes) y cronograma de tareas con prioridades.',
                 color: 'bg-blue-50 text-blue-600',
               },
               {
                 icon: Calendar,
                 title: 'Agenda Inteligente',
-                description: 'Calendario con citas por abogado, autoagendamiento público para clientes y recordatorios automáticos por WhatsApp.',
+                description: 'Calendario de citas por abogado, con soporte para citas presenciales, virtuales y telefónicas. Autoagendamiento público para clientes.',
                 color: 'bg-emerald-50 text-emerald-600',
               },
               {
                 icon: BrainCircuit,
                 title: 'Consultas con IA',
-                description: 'Pregunta sobre leyes, jurisprudencia o redacción legal. Claude AI te responde con fuentes y referencias.',
+                description: 'Pregunta sobre leyes, jurisprudencia de la SCJN o solicita ayuda para redacción legal. La IA responde con fuentes y referencias verificables.',
                 color: 'bg-purple-50 text-purple-600',
               },
               {
                 icon: Users,
                 title: 'Cartera de Clientes',
-                description: 'Ficha completa por cliente: contacto, expedientes vinculados, historial de citas y documentos.',
+                description: 'Ficha completa por cliente: datos de contacto, identificación oficial, expedientes vinculados, historial de citas y notas del abogado.',
                 color: 'bg-amber-50 text-amber-600',
               },
               {
                 icon: Bell,
-                title: 'Notificaciones Móviles',
-                description: 'Recordatorios de citas, tareas vencidas y audiencias próximas vía WhatsApp y notificaciones push.',
+                title: 'Notificaciones en Tiempo Real',
+                description: 'Alertas web instantáneas para citas próximas, tareas vencidas y audiencias. Arquitectura Realtime sobre Supabase.',
                 color: 'bg-red-50 text-red-600',
               },
               {
                 icon: Shield,
                 title: 'Seguridad Multi-tenant',
-                description: 'Cada abogado ve solo su cartera. RLS a nivel base de datos. Datos encriptados y backups automáticos.',
+                description: 'Cada despacho ve exclusivamente sus datos. Row Level Security (RLS) a nivel de base de datos, cifrado en reposo y auditoría de accesos.',
                 color: 'bg-slate-100 text-slate-600',
+              },
+              {
+                icon: FileText,
+                title: 'Base de Conocimiento',
+                description: 'Sube leyes, reglamentos y plantillas internas. La IA puede consultarlos como contexto adicional en tus preguntas.',
+                color: 'bg-indigo-50 text-indigo-600',
+              },
+              {
+                icon: BarChart3,
+                title: 'Dashboard Ejecutivo',
+                description: 'Resumen diario de citas, audiencias próximas, tareas pendientes y últimas consultas IA. Todo en un vistazo.',
+                color: 'bg-teal-50 text-teal-600',
+              },
+              {
+                icon: Lock,
+                title: 'Recuperación de Contraseña',
+                description: 'Flujo seguro de recuperación vía email con tokens de un solo uso. Validación de contraseñas con estándares de seguridad.',
+                color: 'bg-rose-50 text-rose-600',
               },
             ].map((feature) => (
               <div key={feature.title} className="card p-6 card-interactive">
@@ -233,34 +254,87 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---- STATS ---- */}
-      <section className="py-16 gradient-brand">
+      {/* ---- SEGURIDAD ---- */}
+      <section id="seguridad" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { value: '500+', label: 'Despachos Activos' },
-              { value: '12,000+', label: 'Expedientes Gestionados' },
-              { value: '98%', label: 'Satisfacción' },
-              { value: '45,000+', label: 'Consultas IA Realizadas' },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <div className="text-3xl sm:text-4xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-sm text-blue-200">{stat.label}</div>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium mb-4">
+                <Shield className="w-4 h-4" />
+                Arquitectura de Seguridad
               </div>
-            ))}
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+                Construido con seguridad desde el diseño
+              </h2>
+              <p className="text-slate-600 mb-8 leading-relaxed">
+                La información de tus clientes y expedientes es confidencial. JuridIQ implementa múltiples capas de protección para garantizar que solo las personas autorizadas accedan a los datos correctos.
+              </p>
+              <ul className="space-y-4">
+                {[
+                  {
+                    title: 'Row Level Security (RLS)',
+                    desc: 'Las políticas de seguridad se aplican directamente en la base de datos PostgreSQL, no solo en la aplicación.',
+                  },
+                  {
+                    title: 'Aislamiento multi-tenant estricto',
+                    desc: 'Cada despacho opera en un espacio completamente aislado. No es posible acceder a datos de otros despachos.',
+                  },
+                  {
+                    title: 'Autenticación con Supabase Auth',
+                    desc: 'JWT tokens con expiración, refresh automático y soporte para verificación de email.',
+                  },
+                  {
+                    title: 'Headers HTTP de seguridad',
+                    desc: 'X-Frame-Options, CSP, HSTS, X-Content-Type-Options y más configurados en cada respuesta.',
+                  },
+                  {
+                    title: 'Auditoría de operaciones',
+                    desc: 'Registro automático de todas las operaciones críticas (creación, modificación y eliminación de registros).',
+                  },
+                  {
+                    title: 'Rate limiting en API',
+                    desc: 'Protección contra abuso en endpoints de IA y autenticación con límites por usuario y por hora.',
+                  },
+                ].map((item) => (
+                  <li key={item.title} className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-sm font-semibold text-slate-900">{item.title}: </span>
+                      <span className="text-sm text-slate-600">{item.desc}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-2xl bg-slate-900 p-8 text-sm font-mono">
+              <div className="text-slate-500 mb-2">-- Ejemplo de política RLS en PostgreSQL</div>
+              <div className="text-emerald-400">CREATE POLICY</div>
+              <div className="text-white ml-2">&quot;clientes_select&quot;</div>
+              <div className="text-blue-400 ml-2">ON</div>
+              <div className="text-white ml-2">clientes</div>
+              <div className="text-blue-400 ml-2">FOR SELECT</div>
+              <div className="text-blue-400 ml-2">USING (</div>
+              <div className="text-amber-400 ml-4">is_superadmin()</div>
+              <div className="text-white ml-4">OR</div>
+              <div className="text-amber-400 ml-4">despacho_id =</div>
+              <div className="text-purple-400 ml-6">get_user_despacho_id()</div>
+              <div className="text-blue-400 ml-2">);</div>
+              <div className="mt-6 text-slate-500">-- Nadie puede ver clientes de otro despacho</div>
+              <div className="mt-1 text-slate-500">-- ni siquiera con acceso directo a la DB</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ---- PRICING ---- */}
-      <section id="pricing" className="py-24">
+      {/* ---- PLANES ---- */}
+      <section id="planes" className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Planes diseñados para despachos
+              Planes para cada despacho
             </h2>
             <p className="text-lg text-slate-600">
-              Elige el plan que mejor se adapte al tamaño de tu equipo.
+              Escoge el plan que mejor se adapte al tamaño y necesidades de tu equipo.
             </p>
           </div>
 
@@ -271,24 +345,27 @@ export default function LandingPage() {
                 price: '$999',
                 period: '/mes',
                 description: 'Para abogados independientes',
-                features: ['1 usuario', '50 expedientes', '20 consultas IA/mes', 'Agenda básica', 'Soporte por email'],
+                features: ['1 usuario', 'Hasta 50 expedientes', '20 consultas IA/mes', 'Agenda básica', 'Soporte por email'],
                 highlighted: false,
+                cta: 'Solicitar acceso Beta',
               },
               {
                 name: 'Profesional',
                 price: '$2,499',
                 period: '/mes',
-                description: 'Para despachos de 2-4 abogados',
-                features: ['4 usuarios', 'Expedientes ilimitados', '100 consultas IA/mes', 'Agenda + autoagendamiento', 'WhatsApp recordatorios', 'Base de conocimiento', 'Soporte prioritario'],
+                description: 'Para despachos de 2–5 abogados',
+                features: ['Hasta 5 usuarios', 'Expedientes ilimitados', '150 consultas IA/mes', 'Agenda + autoagendamiento', 'Base de conocimiento', 'Notificaciones web', 'Soporte prioritario'],
                 highlighted: true,
+                cta: 'Solicitar acceso Beta',
               },
               {
                 name: 'Enterprise',
                 price: '$4,999',
                 period: '/mes',
                 description: 'Para firmas legales grandes',
-                features: ['Usuarios ilimitados', 'Todo ilimitado', 'IA sin límite', 'API dedicada', 'Facturación electrónica', 'SLA 99.9%', 'Soporte dedicado'],
+                features: ['Usuarios ilimitados', 'Todo ilimitado', 'IA sin límite', 'Integraciones API', 'SLA garantizado', 'Onboarding dedicado', 'Soporte 24/7'],
                 highlighted: false,
+                cta: 'Contactar ventas',
               },
             ].map((plan) => (
               <div
@@ -308,7 +385,7 @@ export default function LandingPage() {
                   {plan.name}
                 </h3>
                 <div className="mt-4 mb-2">
-                  <span className={`text-4xl font-bold ${plan.highlighted ? 'text-white' : 'text-slate-900'}`}>
+                  <span className={`text-2xl font-bold ${plan.highlighted ? 'text-white' : 'text-slate-900'}`}>
                     {plan.price}
                   </span>
                   <span className={`text-sm ${plan.highlighted ? 'text-blue-200' : 'text-slate-500'}`}>
@@ -334,7 +411,7 @@ export default function LandingPage() {
                       : 'btn-secondary hover:bg-slate-50'
                   }`}
                 >
-                  Comenzar Ahora
+                  {plan.cta}
                 </Link>
               </div>
             ))}
@@ -342,50 +419,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---- TESTIMONIALS ---- */}
-      <section id="testimonials" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              Lo que dicen nuestros clientes
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: 'Lic. Roberto Hernández',
-                role: 'Socio Director - Hernández & Asociados',
-                quote: 'JuridIQ transformó cómo manejamos nuestros expedientes. La IA nos ahorra horas de investigación cada semana.',
-              },
-              {
-                name: 'Lic. Patricia Morales',
-                role: 'Abogada Penalista',
-                quote: 'El autoagendamiento ha sido increíble. Mis clientes agendan solos y yo solo confirmo. ¡Adiós llamadas innecesarias!',
-              },
-              {
-                name: 'Lic. Fernando Soto',
-                role: 'Socio - Soto, Mendez & Padilla',
-                quote: 'La seguridad multi-tenant nos da tranquilidad. Cada abogado tiene su cartera aislada y los datos están protegidos.',
-              },
-            ].map((testimonial) => (
-              <div key={testimonial.name} className="card p-6">
-                <div className="flex gap-1 mb-3">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-sm text-slate-600 leading-relaxed mb-4">&ldquo;{testimonial.quote}&rdquo;</p>
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">{testimonial.name}</div>
-                  <div className="text-xs text-slate-500">{testimonial.role}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---- CTA ---- */}
+      {/* ---- CTA FINAL ---- */}
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="rounded-2xl gradient-hero p-12 sm:p-16">
@@ -393,10 +427,10 @@ export default function LandingPage() {
               Moderniza tu despacho hoy
             </h2>
             <p className="text-lg text-blue-200 mb-8 max-w-xl mx-auto">
-              Únete a cientos de despachos que ya usan JuridIQ para ser más eficientes.
+              JuridIQ está en acceso anticipado. Regístrate ahora y forma parte de los primeros despachos en usar la plataforma.
             </p>
             <Link href="/signup" className="btn btn-lg bg-white text-blue-700 hover:bg-blue-50 shadow-lg">
-              Comenzar Prueba Gratuita
+              Solicitar Acceso Beta
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -417,36 +451,35 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Plataforma inteligente para despachos jurídicos modernos.
+                Plataforma inteligente para despachos jurídicos mexicanos. En Beta activa.
               </p>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-slate-900 mb-3">Producto</h4>
               <ul className="space-y-2 text-sm text-slate-500">
-                <li><a href="#features" className="hover:text-slate-900 transition-colors">Funciones</a></li>
-                <li><a href="#pricing" className="hover:text-slate-900 transition-colors">Planes</a></li>
-                <li><a href="#" className="hover:text-slate-900 transition-colors">Seguridad</a></li>
+                <li><a href="#funciones" className="hover:text-slate-900 transition-colors">Funciones</a></li>
+                <li><a href="#planes" className="hover:text-slate-900 transition-colors">Planes</a></li>
+                <li><a href="#seguridad" className="hover:text-slate-900 transition-colors">Seguridad</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-slate-900 mb-3">Soporte</h4>
+              <h4 className="text-sm font-semibold text-slate-900 mb-3">Acceso</h4>
               <ul className="space-y-2 text-sm text-slate-500">
-                <li><a href="#" className="hover:text-slate-900 transition-colors">Centro de Ayuda</a></li>
-                <li><a href="#" className="hover:text-slate-900 transition-colors">Contacto</a></li>
-                <li><a href="#" className="hover:text-slate-900 transition-colors">API Docs</a></li>
+                <li><Link href="/login" className="hover:text-slate-900 transition-colors">Iniciar Sesión</Link></li>
+                <li><Link href="/signup" className="hover:text-slate-900 transition-colors">Registrar Despacho</Link></li>
+                <li><Link href="/recuperar" className="hover:text-slate-900 transition-colors">Recuperar Contraseña</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-slate-900 mb-3">Legal</h4>
               <ul className="space-y-2 text-sm text-slate-500">
-                <li><a href="#" className="hover:text-slate-900 transition-colors">Privacidad</a></li>
-                <li><a href="#" className="hover:text-slate-900 transition-colors">Términos</a></li>
-                <li><a href="#" className="hover:text-slate-900 transition-colors">LGPD</a></li>
+                <li><a href="#" className="hover:text-slate-900 transition-colors">Aviso de Privacidad</a></li>
+                <li><a href="#" className="hover:text-slate-900 transition-colors">Términos de Servicio</a></li>
               </ul>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-slate-200 text-center text-sm text-slate-400">
-            © {new Date().getFullYear()} JuridIQ. Todos los derechos reservados.
+            © {new Date().getFullYear()} JuridIQ. Todos los derechos reservados. — Versión Beta
           </div>
         </div>
       </footer>

@@ -1,32 +1,68 @@
+// ============================================================
+// JuridIQ - Citas Page (Conectado a DB Real)
+// ============================================================
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Plus, CalendarDays, ChevronLeft, ChevronRight,
   Clock, MapPin, Video, Phone, CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { cn, getInitials, formatHora, formatFecha } from '@/lib/utils';
-import { mockCitas } from '@/lib/mock-data';
+import { getCitas } from '@/lib/services/citas.service';
+import type { Cita } from '@/types/database';
 
 type ViewMode = 'lista' | 'semana';
 
 export default function CitasPage() {
   const [view, setView] = useState<ViewMode>('lista');
   const [currentDate, setCurrentDate] = useState(new Date());
+  
+  const [citas, setCitas] = useState<Cita[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Function to load all appointments for the visible range
+  useEffect(() => {
+    async function loadCitas() {
+      setLoading(true);
+      try {
+        // Fetch a broad range around current date (e.g. 1 month before/after)
+        const d = new Date(currentDate);
+        const desde = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString();
+        const hasta = new Date(d.getFullYear(), d.getMonth() + 2, 0).toISOString();
+        
+        const { data } = await getCitas({
+          fecha_desde: desde,
+          fecha_hasta: hasta,
+        });
+        
+        setCitas(data || []);
+      } catch (error) {
+        console.error('Error loading citas:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadCitas();
+  }, [currentDate]);
 
   const today = new Date();
-  const citasOrdered = [...mockCitas].sort(
+  
+  // Filter for list view (show all fetched, ordered)
+  const citasOrdered = [...citas].sort(
     (a, b) => new Date(a.fecha_hora).getTime() - new Date(b.fecha_hora).getTime()
   );
 
-  // Group by day
+  // Group by day for list view
   const grouped = citasOrdered.reduce((acc, cita) => {
     const day = new Date(cita.fecha_hora).toDateString();
     if (!acc[day]) acc[day] = [];
     acc[day].push(cita);
     return acc;
-  }, {} as Record<string, typeof mockCitas>);
+  }, {} as Record<string, Cita[]>);
 
   const getTipoCitaIcon = (tipo: string) => {
     switch (tipo) {
@@ -37,7 +73,7 @@ export default function CitasPage() {
     }
   };
 
-  // Generate week days
+  // Generate week days for week view
   const getWeekDays = () => {
     const start = new Date(currentDate);
     start.setDate(start.getDate() - start.getDay() + 1); // Monday
@@ -56,9 +92,9 @@ export default function CitasPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Agenda de Citas</h1>
-          <p className="text-sm text-slate-500 mt-1">{mockCitas.length} citas programadas</p>
+          <p className="text-sm text-slate-500 mt-1">{citas.length} citas programadas este mes</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
               navigator.clipboard.writeText(window.location.origin + '/agendar');
@@ -89,10 +125,20 @@ export default function CitasPage() {
         </div>
       </div>
 
-      {view === 'lista' ? (
+      {loading ? (
+        <div className="card p-8 flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        </div>
+      ) : citas.length === 0 ? (
+         <div className="empty-state card py-16">
+          <CalendarDays className="w-12 h-12 text-slate-300 mb-3" />
+          <p className="text-slate-500 font-medium">No hay citas programadas</p>
+          <p className="text-sm text-slate-400 mt-1">Crea una nueva cita para empezar</p>
+        </div>
+      ) : view === 'lista' ? (
         /* LIST VIEW */
         <div className="space-y-6">
-          {Object.entries(grouped).map(([day, citas]) => {
+          {Object.entries(grouped).map(([day, citasDia]) => {
             const date = new Date(day);
             const isToday = date.toDateString() === today.toDateString();
 
@@ -114,16 +160,17 @@ export default function CitasPage() {
                     <div className="text-sm font-semibold text-slate-900">
                       {isToday ? 'Hoy' : formatFecha(date, "EEEE dd 'de' MMMM")}
                     </div>
-                    <div className="text-xs text-slate-400">{citas.length} cita{citas.length !== 1 ? 's' : ''}</div>
+                    <div className="text-xs text-slate-400">{citasDia.length} cita{citasDia.length !== 1 ? 's' : ''}</div>
                   </div>
                 </div>
 
                 <div className="space-y-2 ml-[60px]">
-                  {citas.map((cita) => (
-                    <div
+                  {citasDia.map((cita) => (
+                    <Link
+                      href={`/dashboard/citas/${cita.cita_id}/editar`}
                       key={cita.cita_id}
                       className={cn(
-                        'card p-4 border-l-4 cursor-pointer hover:shadow-md transition-all',
+                        'block card p-4 border-l-4 cursor-pointer hover:shadow-md transition-all',
                         cita.tipo_cita === 'presencial' ? 'border-l-emerald-500' :
                         cita.tipo_cita === 'virtual' ? 'border-l-blue-500' : 'border-l-purple-500'
                       )}
@@ -137,14 +184,14 @@ export default function CitasPage() {
                             <span className="text-xs text-slate-400">· {cita.duracion_minutos} min</span>
                           </div>
                           <h3 className="text-sm font-medium text-slate-900">{cita.titulo_asunto}</h3>
-                          <div className="text-xs text-slate-500 mt-1">
+                          <div className="text-xs text-slate-500 mt-1 truncate">
                             {cita.cliente?.nombre_completo || cita.nombre_publico || 'Prospecto'}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
                           <div className={cn(
-                            'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
+                            'flex items-center gap-1 text-[10px] sm:text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap',
                             cita.tipo_cita === 'presencial' ? 'bg-emerald-50 text-emerald-700' :
                             cita.tipo_cita === 'virtual' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
                           )}>
@@ -159,17 +206,17 @@ export default function CitasPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-50">
                         <div className="flex items-center gap-1.5">
                           <div className="avatar avatar-sm bg-slate-100 text-slate-600 text-[10px]">
                             {getInitials(cita.abogado?.nombre_completo || '')}
                           </div>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-400 truncate max-w-[150px]">
                             {cita.abogado?.nombre_completo.split(' ').slice(1, 3).join(' ')}
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -236,7 +283,7 @@ export default function CitasPage() {
                     {hour}:00
                   </div>
                   {weekDays.map((day) => {
-                    const dayCitas = mockCitas.filter((c) => {
+                    const dayCitas = citas.filter((c) => {
                       const d = new Date(c.fecha_hora);
                       return d.toDateString() === day.toDateString() && d.getHours() === hour;
                     });
@@ -244,16 +291,18 @@ export default function CitasPage() {
                     return (
                       <div key={day.toISOString()} className="p-1 border-l border-slate-50 relative">
                         {dayCitas.map((cita) => (
-                          <div
+                          <Link
+                            href={`/dashboard/citas/${cita.cita_id}/editar`}
                             key={cita.cita_id}
                             className={cn(
-                              'text-[10px] px-1.5 py-1 rounded font-medium truncate cursor-pointer',
+                              'block text-[10px] px-1.5 py-1 rounded font-medium truncate cursor-pointer mb-1',
                               cita.tipo_cita === 'presencial' ? 'bg-emerald-100 text-emerald-800' :
                               cita.tipo_cita === 'virtual' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
                             )}
+                            title={cita.titulo_asunto}
                           >
-                            {cita.cliente?.nombre_completo?.split(' ')[0] || cita.nombre_publico?.split(' ')[0]}
-                          </div>
+                            {cita.cliente?.nombre_completo?.split(' ')[0] || cita.nombre_publico?.split(' ')[0] || 'Prospecto'}
+                          </Link>
                         ))}
                       </div>
                     );

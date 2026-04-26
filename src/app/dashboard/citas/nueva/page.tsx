@@ -1,20 +1,92 @@
+// ============================================================
+// JuridIQ - Nueva Cita Page (Conectado a DB Real)
+// ============================================================
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
-import { mockClientes, mockProfiles } from '@/lib/mock-data';
+import { createBrowserClient } from '@supabase/ssr';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { createCita } from '@/lib/services/citas.service';
 
 export default function NuevaCitaPage() {
   const router = useRouter();
+  const { profile } = useAuth();
+  
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [clientes, setClientes] = useState<{ cliente_id: string; nombre_completo: string }[]>([]);
+  const [abogados, setAbogados] = useState<{ id: string; nombre_completo: string }[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    async function loadOptions() {
+      if (!profile?.despacho_id) return;
+      
+      // Load Clientes
+      const { data: cData } = await supabase
+        .from('clientes')
+        .select('cliente_id, nombre_completo')
+        .eq('despacho_id', profile.despacho_id)
+        .eq('estado', 'activo');
+        
+      if (cData) setClientes(cData);
+      
+      // Load Abogados
+      const { data: pData } = await supabase
+        .from('profiles')
+        .select('id, nombre_completo')
+        .eq('despacho_id', profile.despacho_id);
+        
+      if (pData) setAbogados(pData);
+    }
+    loadOptions();
+  }, [profile?.despacho_id, supabase]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!profile?.despacho_id) return;
+    
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    router.push('/dashboard/citas');
+    setError(null);
+    
+    const formData = new FormData(e.currentTarget);
+    
+    const recordatorio = formData.get('recordatorio_whatsapp') === 'on';
+
+    const nuevaCita = {
+      despacho_id: profile.despacho_id,
+      titulo_asunto: formData.get('titulo_asunto') as string,
+      abogado_id: formData.get('abogado_id') as string,
+      cliente_id: formData.get('cliente_id') as string || null,
+      nombre_publico: null, // As it is not public auto-schedule
+      email_publico: null,
+      telefono_publico: null,
+      fecha_hora: new Date(formData.get('fecha_hora') as string).toISOString(),
+      duracion_minutos: parseInt(formData.get('duracion_minutos') as string),
+      tipo_cita: formData.get('tipo_cita') as string,
+      enlace_reunion: formData.get('enlace_reunion') as string || null,
+      notas: formData.get('notas') as string || null,
+      confirmada: true, // Internal creation usually means confirmed
+    };
+
+    const { error: submitError } = await createCita(nuevaCita);
+
+    if (submitError) {
+      console.error('Error al crear cita:', submitError);
+      setError(submitError);
+      setLoading(false);
+    } else {
+      router.push('/dashboard/citas');
+      router.refresh();
+    }
   };
 
   return (
@@ -29,47 +101,54 @@ export default function NuevaCitaPage() {
 
       <div className="card p-6">
         <h1 className="text-xl font-bold text-slate-900 mb-6">Agendar Cita</h1>
+        
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Asunto *</label>
-              <input type="text" className="input" placeholder="Ej: Revisión de documentos" required />
+              <input name="titulo_asunto" type="text" className="input" placeholder="Ej: Revisión de documentos" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Abogado *</label>
-              <select className="input" required>
+              <select name="abogado_id" className="input" required>
                 <option value="">Seleccionar</option>
-                {mockProfiles.map((p) => (
+                {abogados.map((p) => (
                   <option key={p.id} value={p.id}>{p.nombre_completo}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Cliente</label>
-              <select className="input">
+              <select name="cliente_id" className="input">
                 <option value="">Prospecto / sin asignar</option>
-                {mockClientes.filter(c => c.estado === 'activo').map((c) => (
+                {clientes.map((c) => (
                   <option key={c.cliente_id} value={c.cliente_id}>{c.nombre_completo}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Fecha y hora *</label>
-              <input type="datetime-local" className="input" required />
+              <input name="fecha_hora" type="datetime-local" className="input" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Duración</label>
-              <select className="input">
+              <select name="duracion_minutos" className="input" defaultValue="60">
                 <option value="30">30 minutos</option>
                 <option value="45">45 minutos</option>
-                <option value="60" selected>60 minutos</option>
+                <option value="60">60 minutos</option>
                 <option value="90">90 minutos</option>
                 <option value="120">2 horas</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Tipo de cita *</label>
-              <select className="input" required>
+              <select name="tipo_cita" className="input" required>
                 <option value="presencial">🏢 Presencial</option>
                 <option value="virtual">💻 Virtual</option>
                 <option value="telefonica">📞 Telefónica</option>
@@ -77,23 +156,23 @@ export default function NuevaCitaPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Enlace Zoom/Meet</label>
-              <input type="url" className="input" placeholder="https://zoom.us/j/..." />
+              <input name="enlace_reunion" type="url" className="input" placeholder="https://zoom.us/j/..." />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Descripción / Notas</label>
-            <textarea className="input min-h-[80px] resize-y" placeholder="Notas sobre la cita..." />
+            <textarea name="notas" className="input min-h-[80px] resize-y" placeholder="Notas sobre la cita..." />
           </div>
 
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="rounded border-slate-300 text-blue-600" />
+            <input name="recordatorio_whatsapp" type="checkbox" className="rounded border-slate-300 text-blue-600" />
             <span className="text-sm text-slate-600">Enviar recordatorio por WhatsApp 24h antes</span>
           </label>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <Link href="/dashboard/citas" className="btn btn-secondary">Cancelar</Link>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button type="submit" className="btn btn-primary" disabled={loading || !profile?.despacho_id}>
               {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</> : <><Save className="w-4 h-4" /> Agendar Cita</>}
             </button>
           </div>

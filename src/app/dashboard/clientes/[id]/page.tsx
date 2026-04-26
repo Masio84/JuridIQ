@@ -1,26 +1,54 @@
+// ============================================================
+// JuridIQ - Cliente Detail Page (Conectado a BD Real)
+// ============================================================
 'use client';
 
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,
-  Mail,
-  Phone,
-  MapPin,
-  FileText,
-  Calendar,
-  Edit,
-  FolderOpen,
-  User,
-  Hash,
+  ArrowLeft, Mail, Phone, MapPin, FileText, Calendar, Edit, FolderOpen, User, Hash, Loader2
 } from 'lucide-react';
 import { cn, getInitials, formatFecha } from '@/lib/utils';
 import { ESTADO_CLIENTE_LABELS, ESTADO_CASO_LABELS, TIPO_CASO_LABELS } from '@/lib/constants';
-import { mockClientes, mockExpedientes, mockCitas } from '@/lib/mock-data';
+import { getClienteById } from '@/lib/services/clientes.service';
+import { getCitas } from '@/lib/services/citas.service';
+import type { Cliente, Expediente, Cita } from '@/types/database';
 
 export default function ClienteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const cliente = mockClientes.find((c) => c.cliente_id === id);
+  
+  const [cliente, setCliente] = useState<Cliente & { expedientes?: Expediente[] } | null>(null);
+  const [citas, setCitas] = useState<Cita[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        const clientData = await getClienteById(id);
+        setCliente(clientData as Cliente & { expedientes?: Expediente[] });
+        
+        if (clientData) {
+          // Cargar las citas del cliente
+          const { data: citasData } = await getCitas();
+          setCitas(citasData.filter(c => c.cliente_id === id) || []);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
   if (!cliente) {
     return (
@@ -34,9 +62,8 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const expedientes = mockExpedientes.filter((e) => e.cliente_id === id);
-  const citas = mockCitas.filter((c) => c.cliente_id === id);
-  const estadoInfo = ESTADO_CLIENTE_LABELS[cliente.estado];
+  const expedientes = cliente.expedientes || [];
+  const estadoInfo = ESTADO_CLIENTE_LABELS[cliente.estado as keyof typeof ESTADO_CLIENTE_LABELS];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -61,7 +88,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
               <h1 className="text-xl font-bold text-slate-900">{cliente.nombre_completo}</h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className={cn('badge', estadoInfo?.bg, estadoInfo?.color)}>
-                  {estadoInfo?.label}
+                  {estadoInfo?.label || cliente.estado}
                 </span>
                 <span className="text-xs text-slate-400">
                   Registrado {formatFecha(cliente.fecha_registro)}
@@ -69,10 +96,10 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm">
+          <Link href={`/dashboard/clientes/${id}/editar`} className="btn btn-secondary btn-sm">
             <Edit className="w-4 h-4" />
             Editar
-          </button>
+          </Link>
         </div>
 
         {/* Contact info */}
@@ -81,9 +108,9 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
             <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
               <Mail className="w-4 h-4 text-blue-500" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-[11px] text-slate-400 uppercase font-medium">Email</div>
-              <div className="text-sm text-slate-700">{cliente.email}</div>
+              <div className="text-sm text-slate-700 truncate">{cliente.email}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -99,9 +126,9 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
             <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
               <Hash className="w-4 h-4 text-amber-500" />
             </div>
-            <div>
-              <div className="text-[11px] text-slate-400 uppercase font-medium">{cliente.tipo_identificacion}</div>
-              <div className="text-sm text-slate-700">{cliente.numero_identificacion}</div>
+            <div className="min-w-0">
+              <div className="text-[11px] text-slate-400 uppercase font-medium">{cliente.tipo_identificacion || 'ID'}</div>
+              <div className="text-sm text-slate-700 truncate">{cliente.numero_identificacion || 'N/A'}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -110,7 +137,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
             </div>
             <div>
               <div className="text-[11px] text-slate-400 uppercase font-medium">Domicilio</div>
-              <div className="text-sm text-slate-700 truncate max-w-[200px]">{cliente.domicilio}</div>
+              <div className="text-sm text-slate-700 truncate max-w-[200px]">{cliente.domicilio || 'No registrado'}</div>
             </div>
           </div>
         </div>
@@ -146,8 +173,8 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
           ) : (
             <div className="space-y-3">
               {expedientes.map((exp) => {
-                const estadoCaso = ESTADO_CASO_LABELS[exp.estado_caso];
-                const tipoCaso = TIPO_CASO_LABELS[exp.tipo_caso];
+                const estadoCaso = ESTADO_CASO_LABELS[exp.estado_caso as keyof typeof ESTADO_CASO_LABELS];
+                const tipoCaso = TIPO_CASO_LABELS[exp.tipo_caso as keyof typeof TIPO_CASO_LABELS];
                 return (
                   <Link
                     key={exp.expediente_id}
@@ -158,11 +185,11 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
                       <div>
                         <div className="text-sm font-medium text-slate-900">{exp.titulo}</div>
                         <div className="text-xs text-slate-500 mt-0.5">
-                          {tipoCaso?.icon} {tipoCaso?.label} · {exp.numero_expediente}
+                          {tipoCaso?.icon} {tipoCaso?.label || exp.tipo_caso} · {exp.numero_expediente || 'Sin número'}
                         </div>
                       </div>
                       <span className={cn('badge text-[10px]', estadoCaso?.bg, estadoCaso?.color)}>
-                        {estadoCaso?.label}
+                        {estadoCaso?.label || exp.estado_caso}
                       </span>
                     </div>
                   </Link>

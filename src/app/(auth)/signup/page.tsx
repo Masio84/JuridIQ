@@ -1,9 +1,25 @@
+// ============================================================
+// JuridIQ - Signup Page (Registro Real con Supabase)
+// ============================================================
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Scale, Mail, Lock, User, Building2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Scale, Mail, Lock, User, Building2, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+function validatePassword(password: string): string | null {
+  if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+  if (!/[A-Z]/.test(password)) return 'La contraseña debe tener al menos una letra mayúscula.';
+  if (!/[0-9]/.test(password)) return 'La contraseña debe tener al menos un número.';
+  return null;
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -18,6 +34,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const updateField = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -27,32 +44,97 @@ export default function SignupPage() {
     e.preventDefault();
     setError('');
 
+    // Validaciones de cliente
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden.');
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
-      return;
-    }
+    const pwError = validatePassword(formData.password);
+    if (pwError) { setError(pwError); return; }
 
     if (!formData.aceptaTerminos) {
-      setError('Debes aceptar los términos y condiciones.');
+      setError('Debes aceptar los Términos de Servicio para continuar.');
       return;
     }
 
     setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push('/dashboard');
+      // 1. Crear el usuario en Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        options: {
+          data: {
+            nombre_completo: formData.nombre.trim(),
+            nombre_despacho: formData.nombreDespacho.trim(),
+            role: 'admin_despacho',
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (authError) {
+        if (authError.message.includes('already registered')) {
+          setError('Ya existe una cuenta con ese correo. ¿Quieres iniciar sesión?');
+        } else {
+          setError('Error al crear la cuenta. Intenta de nuevo.');
+        }
+        return;
+      }
+
+      if (authData.user) {
+        // 2. Crear el despacho y vincularlo (via API route para usar service_role)
+        if (formData.nombreDespacho.trim()) {
+          await fetch('/api/auth/setup-despacho', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: authData.user.id,
+              nombreDespacho: formData.nombreDespacho.trim(),
+              emailPrincipal: formData.email.trim().toLowerCase(),
+            }),
+          });
+        }
+
+        // 3. Si el email necesita verificación
+        if (!authData.session) {
+          setSuccess(true);
+        } else {
+          router.push('/dashboard');
+          router.refresh();
+        }
+      }
     } catch {
-      setError('Error al crear la cuenta. Intenta de nuevo.');
+      setError('Error de conexión. Verifica tu internet e intenta de nuevo.');
     } finally {
       setLoading(false);
     }
   };
+
+  // Pantalla de éxito — email de verificación enviado
+  if (success) {
+    return (
+      <div className="animate-fade-in">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">¡Cuenta creada!</h1>
+          <p className="text-slate-600 mb-4">
+            Enviamos un correo de verificación a <strong>{formData.email}</strong>.
+          </p>
+          <p className="text-sm text-slate-500 mb-6">
+            Revisa tu bandeja de entrada (y la carpeta de spam) y haz clic en el enlace para activar tu cuenta.
+          </p>
+          <Link href="/login" className="btn btn-primary w-full">
+            Ir al inicio de sesión
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">
@@ -73,12 +155,13 @@ export default function SignupPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-600 animate-slide-down">
-            {error}
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-600 animate-slide-down flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSignup} className="space-y-4">
+        <form onSubmit={handleSignup} className="space-y-4" noValidate>
           <div>
             <label htmlFor="nombre" className="block text-sm font-medium text-slate-700 mb-1.5">
               Nombre completo
@@ -93,6 +176,7 @@ export default function SignupPage() {
                 className="input !pl-10"
                 placeholder="Lic. Juan Pérez"
                 required
+                autoComplete="name"
               />
             </div>
           </div>
@@ -111,6 +195,7 @@ export default function SignupPage() {
                 className="input !pl-10"
                 placeholder="tu@despacho.com"
                 required
+                autoComplete="email"
               />
             </div>
           </div>
@@ -129,6 +214,7 @@ export default function SignupPage() {
                 className="input !pl-10"
                 placeholder="García & Asociados"
                 required
+                autoComplete="organization"
               />
             </div>
           </div>
@@ -149,6 +235,7 @@ export default function SignupPage() {
                   placeholder="••••••••"
                   required
                   minLength={8}
+                  autoComplete="new-password"
                 />
               </div>
             </div>
@@ -166,9 +253,22 @@ export default function SignupPage() {
                   className="input !pl-10"
                   placeholder="••••••••"
                   required
+                  autoComplete="new-password"
                 />
               </div>
             </div>
+          </div>
+
+          <div className="text-xs text-slate-400 space-y-1 px-1">
+            <p className={formData.password.length >= 8 ? 'text-emerald-600' : ''}>
+              {formData.password.length >= 8 ? '✓' : '○'} Mínimo 8 caracteres
+            </p>
+            <p className={/[A-Z]/.test(formData.password) ? 'text-emerald-600' : ''}>
+              {/[A-Z]/.test(formData.password) ? '✓' : '○'} Una letra mayúscula
+            </p>
+            <p className={/[0-9]/.test(formData.password) ? 'text-emerald-600' : ''}>
+              {/[0-9]/.test(formData.password) ? '✓' : '○'} Un número
+            </p>
           </div>
 
           <div className="flex items-center gap-2 pt-1">
@@ -208,7 +308,7 @@ export default function SignupPage() {
                 Creando cuenta...
               </>
             ) : (
-              'Crear Cuenta Gratuita'
+              'Crear Cuenta'
             )}
           </button>
         </form>

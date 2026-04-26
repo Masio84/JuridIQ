@@ -3,7 +3,7 @@
 // ============================================
 
 export type PlanType = 'basico' | 'profesional' | 'enterprise';
-export type RolUsuario = 'abogado' | 'admin_despacho' | 'practicante';
+export type RolUsuario = 'superadmin' | 'admin_despacho' | 'abogado' | 'practicante';
 export type EstadoCliente = 'activo' | 'inactivo' | 'archivado';
 export type EstadoCaso = 'apertura' | 'en_proceso' | 'sentenciado' | 'archivado';
 export type TipoCaso = 'penal' | 'civil' | 'laboral' | 'mercantil' | 'familiar' | 'fiscal' | 'administrativo' | 'amparo' | 'otro';
@@ -34,11 +34,12 @@ export interface Profile {
   email: string;
   nombre_completo: string;
   role: RolUsuario;
-  especialidad: Especialidad;
-  despacho_id: string;
-  avatar_url?: string;
-  telefono?: string;
+  especialidad?: Especialidad | null;
+  despacho_id?: string | null;
+  avatar_url?: string | null;
+  telefono?: string | null;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Cliente {

@@ -1,13 +1,38 @@
+// ============================================================
+// JuridIQ - Login Page (Auth Real con Supabase)
+// ============================================================
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Scale, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Scale, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+const ERROR_MESSAGES: Record<string, string> = {
+  'Invalid login credentials': 'Correo o contraseña incorrectos.',
+  'Email not confirmed': 'Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.',
+  'Too many requests': 'Demasiados intentos fallidos. Espera 15 minutos e intenta de nuevo.',
+  'User not found': 'No existe una cuenta con ese correo.',
+};
+
+function getErrorMessage(msg: string): string {
+  for (const [key, value] of Object.entries(ERROR_MESSAGES)) {
+    if (msg.includes(key)) return value;
+  }
+  return 'Error al iniciar sesión. Verifica tus datos e intenta de nuevo.';
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,44 +44,23 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    const isMockMode =
-      !supabaseUrl ||
-      !supabaseKey ||
-      supabaseUrl.includes('your-project') ||
-      supabaseKey.includes('your-anon-key');
-
     try {
-      if (isMockMode) {
-        // Modo Demo (Mock)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        if (email && password) {
-          router.push('/dashboard');
-          router.refresh();
-        } else {
-          setError('Por favor ingresa tu email y contraseña.');
-        }
-      } else {
-        // Login Real conectando con Supabase
-        const supabase = createBrowserClient(supabaseUrl, supabaseKey);
-        
-        const { data, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-        if (authError) {
-          setError('Credenciales incorrectas o usuario no registrado.');
-          console.error('Supabase auth error:', authError.message);
-        } else if (data.session) {
-          router.push('/dashboard');
-          router.refresh();
-        }
+      if (authError) {
+        setError(getErrorMessage(authError.message));
+        return;
+      }
+
+      if (data.session) {
+        router.push(redirectTo);
+        router.refresh();
       }
     } catch {
-      setError('Error al iniciar sesión. Intenta de nuevo.');
+      setError('Error de conexión. Verifica tu internet e intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -81,12 +85,13 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-600 animate-slide-down">
-            {error}
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-600 animate-slide-down flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4" noValidate>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
               Correo electrónico
@@ -101,6 +106,8 @@ export default function LoginPage() {
                 className="input !pl-10"
                 placeholder="tu@despacho.com"
                 required
+                autoComplete="email"
+                autoFocus
               />
             </div>
           </div>
@@ -124,11 +131,13 @@ export default function LoginPage() {
                 className="input !pl-10 !pr-10"
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -137,7 +146,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !email || !password}
             className="btn btn-primary w-full"
           >
             {loading ? (
@@ -151,7 +160,12 @@ export default function LoginPage() {
           </button>
         </form>
 
-
+        <div className="mt-6 text-center text-sm text-slate-500">
+          ¿No tienes cuenta?{' '}
+          <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+            Registrar despacho
+          </Link>
+        </div>
       </div>
 
       <p className="mt-6 text-center text-xs text-slate-400">

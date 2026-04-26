@@ -1,6 +1,10 @@
+// ============================================================
+// JuridIQ - Dashboard Page (Conectado a DB Real)
+// ============================================================
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   Users,
   FolderOpen,
@@ -16,32 +20,113 @@ import {
 } from 'lucide-react';
 import { cn, getGreeting, formatHora, formatFecha, diasRestantes, getInitials } from '@/lib/utils';
 import { ESTADO_CASO_LABELS, TIPO_CASO_LABELS, PRIORIDAD_LABELS } from '@/lib/constants';
-import {
-  mockCurrentUser,
-  mockStats,
-  mockCitas,
-  mockExpedientes,
-  mockTareas,
-  mockConsultasIA,
-  mockClientes,
-} from '@/lib/mock-data';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { getClientes } from '@/lib/services/clientes.service';
+import { getExpedientes } from '@/lib/services/expedientes.service';
+import { getCitasHoy } from '@/lib/services/citas.service';
+import { createBrowserClient } from '@supabase/ssr';
+import type { Cliente, Expediente, Cita, ConsultaIA } from '@/types/database';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function DashboardPage() {
-  const citasHoy = mockCitas.filter((c) => {
-    const d = new Date(c.fecha_hora);
-    const today = new Date();
-    return d.toDateString() === today.toDateString();
+  const { profile, isLoading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
+
+  // Estados de datos reales
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [expedientes, setExpedientes] = useState<Expediente[]>([]);
+  const [citasHoy, setCitasHoy] = useState<Cita[]>([]);
+  const [consultasIA, setConsultasIA] = useState<ConsultaIA[]>([]);
+  const [tareasPendientes, setTareasPendientes] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    clientesActivos: 0,
+    expedientesAbiertos: 0,
+    casosCerrados: 0,
+    consultasIA: 0,
   });
 
-  const expedientesProximos = mockExpedientes
+  useEffect(() => {
+    if (authLoading || !profile?.despacho_id) return;
+
+    async function loadDashboardData() {
+      try {
+        // 1. Citas de hoy
+        const { data: citas } = await getCitasHoy();
+        setCitasHoy(citas || []);
+
+        // 2. Clientes recientes
+        const { data: clientesData, count: totalClientes } = await getClientes({ pageSize: 5 });
+        setClientes(clientesData || []);
+        setStats(s => ({ ...s, clientesActivos: totalClientes }));
+
+        // 3. Expedientes
+        const { data: expedientesData, count: totalExpedientes } = await getExpedientes();
+        setExpedientes(expedientesData || []);
+        const casosCerrados = (expedientesData || []).filter(e => e.estado_caso === 'archivado').length;
+        setStats(s => ({ 
+          ...s, 
+          expedientesAbiertos: totalExpedientes - casosCerrados,
+          casosCerrados
+        }));
+
+        // 4. Últimas consultas IA
+        const { data: consultas } = await supabase
+          .from('consultas_ia')
+          .select('*, abogado:profiles(id, nombre_completo)')
+          .order('fecha_consulta', { ascending: false })
+          .limit(3);
+        
+        setConsultasIA(consultas as any[] || []);
+        
+        // Count total consultas
+        const { count: consultasCount } = await supabase
+          .from('consultas_ia')
+          .select('consulta_id', { count: 'exact', head: true });
+        
+        setStats(s => ({ ...s, consultasIA: consultasCount || 0 }));
+
+        // 5. Tareas pendientes (próximas a vencer)
+        const { data: tareas } = await supabase
+          .from('expediente_tareas')
+          .select('*')
+          .neq('estado', 'completada')
+          .order('fecha_limite', { ascending: true })
+          .limit(5);
+        
+        setTareasPendientes(tareas || []);
+
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, [profile, authLoading]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-10 w-1/3 bg-slate-200 rounded"></div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-28 bg-slate-200 rounded-xl"></div>)}
+        </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {[1,2,3].map(i => <div key={i} className="h-64 bg-slate-200 rounded-xl"></div>)}
+        </div>
+      </div>
+    );
+  }
+
+  const expedientesProximos = expedientes
     .filter((e) => e.fecha_proxima_audiencia && e.estado_caso !== 'archivado')
     .sort((a, b) => new Date(a.fecha_proxima_audiencia!).getTime() - new Date(b.fecha_proxima_audiencia!).getTime())
     .slice(0, 4);
-
-  const tareasPendientes = mockTareas
-    .filter((t) => t.estado !== 'completada')
-    .sort((a, b) => new Date(a.fecha_limite).getTime() - new Date(b.fecha_limite).getTime())
-    .slice(0, 5);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -49,7 +134,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900" suppressHydrationWarning>
-            {getGreeting()}, {mockCurrentUser.nombre_completo.split(' ')[1]}
+            {getGreeting()}, {profile?.nombre_completo.split(' ')[0]}
           </h1>
           <p className="text-sm text-slate-500 mt-1" suppressHydrationWarning>
             Aquí tienes el resumen de tu despacho hoy, {formatFecha(new Date(), "EEEE dd 'de' MMMM")}.
@@ -72,7 +157,7 @@ export default function DashboardPage() {
         {[
           {
             label: 'Clientes Activos',
-            value: mockStats.clientesActivos,
+            value: stats.clientesActivos,
             icon: Users,
             color: 'text-blue-600',
             bg: 'bg-blue-50',
@@ -80,7 +165,7 @@ export default function DashboardPage() {
           },
           {
             label: 'Expedientes Abiertos',
-            value: mockStats.expedientesAbiertos,
+            value: stats.expedientesAbiertos,
             icon: FolderOpen,
             color: 'text-amber-600',
             bg: 'bg-amber-50',
@@ -96,7 +181,7 @@ export default function DashboardPage() {
           },
           {
             label: 'Consultas IA',
-            value: mockStats.consultasIA,
+            value: stats.consultasIA,
             icon: BrainCircuit,
             color: 'text-purple-600',
             bg: 'bg-purple-50',
@@ -194,46 +279,53 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {expedientesProximos.map((exp) => {
-              const dias = diasRestantes(exp.fecha_proxima_audiencia!);
-              const estadoInfo = ESTADO_CASO_LABELS[exp.estado_caso];
-              const tipoInfo = TIPO_CASO_LABELS[exp.tipo_caso];
+          {expedientesProximos.length === 0 ? (
+            <div className="empty-state py-8">
+              <FolderOpen className="w-8 h-8 text-slate-300 mb-2" />
+              <p className="text-sm">No hay audiencias próximas</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {expedientesProximos.map((exp) => {
+                const dias = diasRestantes(exp.fecha_proxima_audiencia!);
+                const estadoInfo = ESTADO_CASO_LABELS[exp.estado_caso];
+                const tipoInfo = TIPO_CASO_LABELS[exp.tipo_caso];
 
-              return (
-                <Link
-                  key={exp.expediente_id}
-                  href={`/dashboard/expedientes/${exp.expediente_id}`}
-                  className="block p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-slate-900 truncate">
-                        {exp.titulo}
+                return (
+                  <Link
+                    key={exp.expediente_id}
+                    href={`/dashboard/expedientes/${exp.expediente_id}`}
+                    className="block p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-slate-900 truncate">
+                          {exp.titulo}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {tipoInfo?.icon} {tipoInfo?.label} · {exp.juzgado?.split(' - ')[0] || 'Sin juzgado'}
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        {tipoInfo?.icon} {tipoInfo?.label} · {exp.juzgado?.split(' - ')[0]}
-                      </div>
+                      <span className={cn('badge text-[10px]', estadoInfo?.bg, estadoInfo?.color)}>
+                        {estadoInfo?.label}
+                      </span>
                     </div>
-                    <span className={cn('badge text-[10px]', estadoInfo?.bg, estadoInfo?.color)}>
-                      {estadoInfo?.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-slate-400">
-                      {exp.cliente?.nombre_completo}
-                    </span>
-                    <span className={cn(
-                      'text-xs font-medium',
-                      dias <= 3 ? 'text-red-600' : dias <= 7 ? 'text-amber-600' : 'text-slate-500'
-                    )}>
-                      {dias <= 0 ? 'Hoy' : dias === 1 ? 'Mañana' : `En ${dias} días`}
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-slate-400 truncate pr-2">
+                        {exp.cliente?.nombre_completo}
+                      </span>
+                      <span className={cn(
+                        'text-xs font-medium whitespace-nowrap',
+                        dias <= 3 ? 'text-red-600' : dias <= 7 ? 'text-amber-600' : 'text-slate-500'
+                      )}>
+                        {dias <= 0 ? 'Hoy' : dias === 1 ? 'Mañana' : `En ${dias} días`}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Tareas Pendientes - Right Column */}
@@ -248,48 +340,55 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <div className="space-y-2">
-            {tareasPendientes.map((tarea) => {
-              const dias = diasRestantes(tarea.fecha_limite);
-              const prioridadInfo = PRIORIDAD_LABELS[tarea.prioridad];
+          {tareasPendientes.length === 0 ? (
+            <div className="empty-state py-8">
+              <CheckCircle2 className="w-8 h-8 text-slate-300 mb-2" />
+              <p className="text-sm">Todo al día</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {tareasPendientes.map((tarea) => {
+                const dias = diasRestantes(tarea.fecha_limite);
+                const prioridadInfo = PRIORIDAD_LABELS[tarea.prioridad as keyof typeof PRIORIDAD_LABELS];
 
-              return (
-                <div
-                  key={tarea.tarea_id}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                >
-                  <div className={cn(
-                    'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
-                    tarea.prioridad === 'urgente' ? 'bg-red-500' :
-                    tarea.prioridad === 'alta' ? 'bg-amber-500' :
-                    tarea.prioridad === 'media' ? 'bg-blue-500' : 'bg-slate-300'
-                  )} />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-slate-900 truncate">
-                      {tarea.titulo}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded', prioridadInfo?.bg, prioridadInfo?.color)}>
-                        {prioridadInfo?.label}
-                      </span>
-                      <span className={cn(
-                        'text-[10px]',
-                        dias <= 1 ? 'text-red-600 font-medium' : dias <= 3 ? 'text-amber-600' : 'text-slate-400'
-                      )}>
-                        {dias <= 0 ? 'Vence hoy' : dias === 1 ? 'Vence mañana' : `${dias} días`}
-                      </span>
+                return (
+                  <div
+                    key={tarea.tarea_id}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <div className={cn(
+                      'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
+                      tarea.prioridad === 'urgente' ? 'bg-red-500' :
+                      tarea.prioridad === 'alta' ? 'bg-amber-500' :
+                      tarea.prioridad === 'media' ? 'bg-blue-500' : 'bg-slate-300'
+                    )} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-slate-900 truncate">
+                        {tarea.titulo}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded', prioridadInfo?.bg, prioridadInfo?.color)}>
+                          {prioridadInfo?.label}
+                        </span>
+                        <span className={cn(
+                          'text-[10px]',
+                          dias <= 1 ? 'text-red-600 font-medium' : dias <= 3 ? 'text-amber-600' : 'text-slate-400'
+                        )}>
+                          {dias <= 0 ? 'Vence hoy' : dias === 1 ? 'Vence mañana' : `${dias} días`}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bottom Row: Charts & Activity */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Cases chart (simplified visual) */}
+        {/* Cases chart */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -299,39 +398,41 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 rounded-xl bg-blue-50 border border-blue-100">
-              <div className="text-3xl font-bold text-blue-600">{mockStats.casosAbiertos}</div>
+              <div className="text-3xl font-bold text-blue-600">{stats.expedientesAbiertos}</div>
               <div className="text-xs text-blue-500 mt-1">Casos Abiertos</div>
             </div>
             <div className="text-center p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-              <div className="text-3xl font-bold text-emerald-600">{mockStats.casosCerrados}</div>
+              <div className="text-3xl font-bold text-emerald-600">{stats.casosCerrados}</div>
               <div className="text-xs text-emerald-500 mt-1">Casos Cerrados</div>
             </div>
           </div>
 
           {/* Visual bar chart */}
-          <div className="mt-4 space-y-3">
-            {Object.entries(
-              mockExpedientes.reduce((acc, exp) => {
-                acc[exp.tipo_caso] = (acc[exp.tipo_caso] || 0) + 1;
-                return acc;
-              }, {} as Record<string, number>)
-            ).map(([tipo, count]) => {
-              const tipoInfo = TIPO_CASO_LABELS[tipo];
-              const percentage = (count / mockExpedientes.length) * 100;
-              return (
-                <div key={tipo} className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500 w-20 truncate">{tipoInfo?.label || tipo}</span>
-                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                      style={{ width: `${percentage}%` }}
-                    />
+          {expedientes.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {Object.entries(
+                expedientes.reduce((acc, exp) => {
+                  acc[exp.tipo_caso] = (acc[exp.tipo_caso] || 0) + 1;
+                  return acc;
+                }, {} as Record<string, number>)
+              ).map(([tipo, count]) => {
+                const tipoInfo = TIPO_CASO_LABELS[tipo as keyof typeof TIPO_CASO_LABELS];
+                const percentage = (count / expedientes.length) * 100;
+                return (
+                  <div key={tipo} className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500 w-24 truncate">{tipoInfo?.label || tipo}</span>
+                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-slate-700 w-6 text-right">{count}</span>
                   </div>
-                  <span className="text-xs font-medium text-slate-700 w-6 text-right">{count}</span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Recent AI Queries */}
@@ -346,31 +447,42 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {mockConsultasIA.slice(0, 3).map((consulta) => (
-              <div key={consulta.consulta_id} className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                <div className="text-sm font-medium text-slate-900 line-clamp-2">
-                  {consulta.pregunta_original}
-                </div>
-                <div className="flex items-center gap-3 mt-2">
-                  <div className="flex items-center gap-1.5">
-                    <div className="avatar avatar-sm bg-purple-100 text-purple-600 text-[10px]">
-                      {getInitials(consulta.abogado?.nombre_completo || '')}
+          {consultasIA.length === 0 ? (
+            <div className="empty-state py-8">
+              <BrainCircuit className="w-8 h-8 text-slate-300 mb-2" />
+              <p className="text-sm">No has realizado consultas a la IA</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {consultasIA.map((consulta) => (
+                <Link 
+                  key={consulta.consulta_id} 
+                  href="/dashboard/consultas-ia"
+                  className="block p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                >
+                  <div className="text-sm font-medium text-slate-900 line-clamp-2">
+                    {consulta.pregunta_original}
+                  </div>
+                  <div className="flex items-center gap-3 mt-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="avatar avatar-sm bg-purple-100 text-purple-600 text-[10px]">
+                        {getInitials(consulta.abogado?.nombre_completo || '')}
+                      </div>
+                      <span className="text-xs text-slate-500 truncate max-w-[100px]">
+                        {consulta.abogado?.nombre_completo.split(' ')[0]}
+                      </span>
                     </div>
-                    <span className="text-xs text-slate-500">
-                      {consulta.abogado?.nombre_completo.split(' ').slice(1, 3).join(' ')}
+                    <span className="text-xs text-slate-400">
+                      {formatFecha(consulta.fecha_consulta)}
+                    </span>
+                    <span className="text-[10px] text-slate-400 ml-auto">
+                      {consulta.tokens_utilizados} tokens
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400">
-                    {formatFecha(consulta.fecha_consulta)}
-                  </span>
-                  <span className="text-[10px] text-slate-400 ml-auto">
-                    {consulta.tokens_utilizados} tokens
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -385,58 +497,66 @@ export default function DashboardPage() {
             Ver todos
           </Link>
         </div>
-        <div className="table-container border-0 rounded-none">
-          <table>
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th className="hidden sm:table-cell">Contacto</th>
-                <th className="hidden md:table-cell">Abogado</th>
-                <th>Expedientes</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockClientes.slice(0, 5).map((cliente) => (
-                <tr key={cliente.cliente_id}>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="avatar avatar-sm bg-brand-50 text-brand-700 text-xs">
-                        {getInitials(cliente.nombre_completo)}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">{cliente.nombre_completo}</div>
-                        <div className="text-xs text-slate-400 sm:hidden">{cliente.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="hidden sm:table-cell">
-                    <div className="text-sm text-slate-600">{cliente.email}</div>
-                    <div className="text-xs text-slate-400">{cliente.telefono}</div>
-                  </td>
-                  <td className="hidden md:table-cell">
-                    <div className="text-sm text-slate-600">
-                      {cliente.abogado?.nombre_completo.split(' ').slice(1, 3).join(' ')}
-                    </div>
-                  </td>
-                  <td>
-                    <span className="text-sm font-medium text-slate-700">{cliente.expedientes_count || 0}</span>
-                  </td>
-                  <td>
-                    <span className={cn(
-                      'badge',
-                      cliente.estado === 'activo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      cliente.estado === 'archivado' ? 'bg-slate-50 text-slate-500 border-slate-200' :
-                      'bg-slate-50 text-slate-500 border-slate-200'
-                    )}>
-                      {cliente.estado === 'activo' ? '● Activo' : cliente.estado === 'archivado' ? 'Archivado' : 'Inactivo'}
-                    </span>
-                  </td>
+        
+        {clientes.length === 0 ? (
+          <div className="empty-state py-8">
+            <Users className="w-8 h-8 text-slate-300 mb-2" />
+            <p className="text-sm">No hay clientes registrados</p>
+          </div>
+        ) : (
+          <div className="table-container border-0 rounded-none">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th className="hidden sm:table-cell">Contacto</th>
+                  <th className="hidden md:table-cell">Abogado</th>
+                  <th>Expedientes</th>
+                  <th>Estado</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {clientes.map((cliente) => (
+                  <tr key={cliente.cliente_id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="avatar avatar-sm bg-brand-50 text-brand-700 text-xs">
+                          {getInitials(cliente.nombre_completo)}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-slate-900">{cliente.nombre_completo}</div>
+                          <div className="text-xs text-slate-400 sm:hidden">{cliente.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden sm:table-cell">
+                      <div className="text-sm text-slate-600">{cliente.email}</div>
+                      <div className="text-xs text-slate-400">{cliente.telefono}</div>
+                    </td>
+                    <td className="hidden md:table-cell">
+                      <div className="text-sm text-slate-600 truncate max-w-[150px]">
+                        {cliente.abogado?.nombre_completo || 'Sin asignar'}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="text-sm font-medium text-slate-700">{cliente.expedientes_count || 0}</span>
+                    </td>
+                    <td>
+                      <span className={cn(
+                        'badge',
+                        cliente.estado === 'activo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        cliente.estado === 'archivado' ? 'bg-slate-50 text-slate-500 border-slate-200' :
+                        'bg-slate-50 text-slate-500 border-slate-200'
+                      )}>
+                        {cliente.estado === 'activo' ? '● Activo' : cliente.estado === 'archivado' ? 'Archivado' : 'Inactivo'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
