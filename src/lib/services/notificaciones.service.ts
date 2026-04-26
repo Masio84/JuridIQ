@@ -59,5 +59,14 @@ export function subscribeToNotificaciones(
     )
     .subscribe();
 
-  return () => supabase.removeChannel(channel);
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
+export async function eliminarNotificacion(notificacionId: string): Promise<void> {
+  await supabase
+    .from('notificaciones')
+    .delete()
+    .eq('notificacion_id', notificacionId);
 }

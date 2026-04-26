@@ -179,6 +179,8 @@ export interface Notificacion {
   enviada: boolean;
   fecha_envio?: string;
   fecha_creacion: string;
+  ruta_destino?: string;
+  prioridad?: 'alta' | 'media' | 'baja';
 }
 
 export interface SolicitudRegistro {
