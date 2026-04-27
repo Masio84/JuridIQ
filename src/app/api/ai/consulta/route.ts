@@ -105,8 +105,8 @@ REGLAS ESTRICTAS:
 7. Agrega siempre una nota aclaratoria sobre consultar la legislación vigente`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2048,
+      model: 'claude-haiku-4-5',
+      max_tokens: 1536,
       system: systemPrompt,
       messages: [{ role: 'user', content: pregunta.trim() }],
     });

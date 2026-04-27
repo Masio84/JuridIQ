@@ -3,25 +3,91 @@
 // ============================================================
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Plus, CalendarDays, ChevronLeft, ChevronRight,
   Clock, MapPin, Video, Phone, CheckCircle2,
-  Loader2
+  Loader2, Share2, Copy, Check, X, ExternalLink, Settings2
 } from 'lucide-react';
 import { cn, getInitials, formatHora, formatFecha } from '@/lib/utils';
 import { getCitas } from '@/lib/services/citas.service';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Cita } from '@/types/database';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type ViewMode = 'lista' | 'semana';
 
 export default function CitasPage() {
+  const { profile } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [view, setView] = useState<ViewMode>('lista');
   const [currentDate, setCurrentDate] = useState(new Date());
-  
   const [citas, setCitas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Share link modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [slugPersonal, setSlugPersonal] = useState('');
+  const [mensajeBienvenida, setMensajeBienvenida] = useState('');
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Open modal if ?compartir=1 in URL (from Topbar button)
+  useEffect(() => {
+    if (searchParams.get('compartir') === '1') {
+      setShowShareModal(true);
+      // Clean URL without reload
+      router.replace('/dashboard/citas', { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Load saved config
+  useEffect(() => {
+    if (!profile?.id) return;
+    supabase
+      .from('profiles')
+      .select('slug_agenda, mensaje_agenda')
+      .eq('id', profile.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setSlugPersonal((data as any).slug_agenda || '');
+          setMensajeBienvenida((data as any).mensaje_agenda || '');
+        }
+      });
+  }, [profile]);
+
+  const getPublicUrl = () => {
+    const base = typeof window !== 'undefined' ? window.location.origin : 'https://juridiq.vercel.app';
+    return slugPersonal ? `${base}/agendar/${slugPersonal}` : `${base}/agendar`;
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(getPublicUrl());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSaveConfig = async () => {
+    if (!profile?.id) return;
+    setSavingConfig(true);
+    // Validate slug: only letters, numbers, hyphens
+    const cleanSlug = slugPersonal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '');
+    setSlugPersonal(cleanSlug);
+    await supabase
+      .from('profiles')
+      .update({ slug_agenda: cleanSlug || null, mensaje_agenda: mensajeBienvenida } as any)
+      .eq('id', profile.id);
+    setSavingConfig(false);
+  };
 
   // Function to load all appointments for the visible range
   useEffect(() => {
@@ -96,14 +162,11 @@ export default function CitasPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.origin + '/agendar');
-              alert('Enlace de autoagendado público copiado al portapapeles');
-            }}
-            className="btn btn-secondary hidden sm:flex"
-            title="Copiar enlace público para clientes"
+            onClick={() => setShowShareModal(true)}
+            className="btn btn-secondary hidden sm:flex gap-2"
+            title="Configurar y compartir enlace de agenda pública"
           >
-            📋 Compartir Enlace
+            <Share2 className="w-4 h-4" /> Compartir Enlace
           </button>
           <div className="flex bg-white border border-slate-200 rounded-lg p-0.5">
             {(['lista', 'semana'] as ViewMode[]).map((v) => (
@@ -312,6 +375,100 @@ export default function CitasPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Link Modal */}
+      {showShareModal && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-sm" onClick={() => setShowShareModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg animate-scale-in p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-blue-600" />
+                  Configurar Enlace de Agenda Pública
+                </h3>
+                <button onClick={() => setShowShareModal(false)} className="p-1.5 hover:bg-slate-100 rounded-lg">
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+
+              <p className="text-sm text-slate-500 mb-4">
+                Personaliza tu enlace público de agenda para que tus clientes puedan solicitar citas directamente.
+              </p>
+
+              {/* URL preview */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 mb-4">
+                <div className="flex items-center gap-2">
+                  <code className="text-xs text-blue-700 flex-1 break-all">{getPublicUrl()}</code>
+                  <button
+                    onClick={handleCopyLink}
+                    className={cn("p-2 rounded-lg transition-colors flex-shrink-0", copied ? "text-emerald-600 bg-emerald-50" : "text-slate-500 hover:bg-slate-200")}
+                    title="Copiar enlace"
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  <a
+                    href={getPublicUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex-shrink-0"
+                    title="Abrir en nueva pestaña"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Slug personalizado (opcional)
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-slate-400 whitespace-nowrap">/agendar/</span>
+                    <input
+                      type="text"
+                      className="input flex-1"
+                      placeholder="ej: lic-garcia"
+                      value={slugPersonal}
+                      onChange={e => setSlugPersonal(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Solo letras minúsculas, números y guiones. Ej: lic-garcia, despacho-tds</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Mensaje de bienvenida (opcional)
+                  </label>
+                  <textarea
+                    className="input min-h-[80px] resize-none"
+                    placeholder="Ej: Bienvenido al despacho García & Asociados. Agenda tu consulta inicial sin costo."
+                    value={mensajeBienvenida}
+                    onChange={e => setMensajeBienvenida(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => setShowShareModal(false)} className="btn btn-secondary flex-1">
+                  Cerrar
+                </button>
+                <button onClick={handleSaveConfig} disabled={savingConfig} className="btn btn-primary flex-1 gap-2">
+                  {savingConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : <Settings2 className="w-4 h-4" />}
+                  Guardar Configuración
+                </button>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-xs text-slate-400 text-center">
+                  💡 Comparte este enlace en tu WhatsApp, Instagram o tarjeta de presentación para que tus clientes agenden directamente.
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

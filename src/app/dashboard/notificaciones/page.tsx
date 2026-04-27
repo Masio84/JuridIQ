@@ -3,12 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { createBrowserClient } from '@supabase/ssr';
 import { getNotificaciones, marcarLeida, marcarTodasLeidas, eliminarNotificacion, subscribeToNotificaciones } from '@/lib/services/notificaciones.service';
 import type { Notificacion } from '@/types/database';
-import { Bell, Check, Trash2, Calendar, FileText, AlertCircle, Info, Loader2, Filter } from 'lucide-react';
+import { Bell, Check, Trash2, Calendar, FileText, AlertCircle, Info, Loader2, MailOpen, Mail } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function NotificacionesPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -63,9 +69,21 @@ export default function NotificacionesPage() {
   };
 
   const handleEliminar = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Evitar que dispare el onClick de la fila
+    e.stopPropagation();
     await eliminarNotificacion(id);
     setNotificaciones(prev => prev.filter(n => n.notificacion_id !== id));
+  };
+
+  const handleToggleLeida = async (e: React.MouseEvent, notif: Notificacion) => {
+    e.stopPropagation();
+    const nuevoEstado = !notif.leida;
+    await supabase
+      .from('notificaciones')
+      .update({ leida: nuevoEstado })
+      .eq('notificacion_id', notif.notificacion_id);
+    setNotificaciones(prev =>
+      prev.map(n => n.notificacion_id === notif.notificacion_id ? { ...n, leida: nuevoEstado } : n)
+    );
   };
 
   const getIcon = (tipo: string, prioridad?: string) => {
@@ -178,8 +196,20 @@ export default function NotificacionesPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => handleToggleLeida(e, notif)}
+                  className={cn(
+                    "p-2 rounded-lg transition-colors text-slate-400",
+                    notif.leida
+                      ? "hover:text-blue-600 hover:bg-blue-50"
+                      : "hover:text-slate-600 hover:bg-slate-100"
+                  )}
+                  title={notif.leida ? 'Marcar como no leída' : 'Marcar como leída'}
+                >
+                  {notif.leida ? <Mail className="w-4 h-4" /> : <MailOpen className="w-4 h-4" />}
+                </button>
+                <button
                   onClick={(e) => handleEliminar(e, notif.notificacion_id)}
                   className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   title="Eliminar"

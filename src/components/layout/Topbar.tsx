@@ -106,10 +106,14 @@ export default function Topbar({ onMenuClick, title }: TopbarProps) {
           )}
         </div>
 
-        {/* Quick actions */}
-        <button className="hidden sm:flex btn btn-primary btn-sm">
-          <Plus className="w-4 h-4" />
-          Nuevo
+        {/* Compartir enlace de agenda */}
+        <button
+          onClick={() => router.push('/dashboard/citas?compartir=1')}
+          className="hidden sm:flex btn btn-primary btn-sm gap-1.5"
+          title="Configurar y compartir enlace de agenda pública"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Compartir Enlace
         </button>
 
         {/* Notifications */}
