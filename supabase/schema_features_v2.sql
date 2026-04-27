@@ -24,15 +24,19 @@ CREATE TABLE IF NOT EXISTS public.registro_horas (
 
 ALTER TABLE public.registro_horas ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "horas_select" ON public.registro_horas;
 CREATE POLICY "horas_select" ON public.registro_horas
   FOR SELECT USING (is_superadmin() OR despacho_id = get_user_despacho_id());
 
+DROP POLICY IF EXISTS "horas_insert" ON public.registro_horas;
 CREATE POLICY "horas_insert" ON public.registro_horas
   FOR INSERT WITH CHECK (is_superadmin() OR despacho_id = get_user_despacho_id());
 
+DROP POLICY IF EXISTS "horas_update" ON public.registro_horas;
 CREATE POLICY "horas_update" ON public.registro_horas
   FOR UPDATE USING (is_superadmin() OR despacho_id = get_user_despacho_id());
 
+DROP POLICY IF EXISTS "horas_delete" ON public.registro_horas;
 CREATE POLICY "horas_delete" ON public.registro_horas
   FOR DELETE USING (is_superadmin() OR despacho_id = get_user_despacho_id());
 
@@ -55,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.cliente_accesos (
 
 ALTER TABLE public.cliente_accesos ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "cliente_accesos_despacho" ON public.cliente_accesos;
 CREATE POLICY "cliente_accesos_despacho" ON public.cliente_accesos
   FOR ALL USING (is_superadmin() OR despacho_id = get_user_despacho_id());
 
