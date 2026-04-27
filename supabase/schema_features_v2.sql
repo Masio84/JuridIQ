@@ -3,7 +3,8 @@
 -- =============================================
 
 -- 1. RLS DELETE para notificaciones
-CREATE POLICY IF NOT EXISTS "notif_delete_own" ON notificaciones
+DROP POLICY IF EXISTS "notif_delete_own" ON notificaciones;
+CREATE POLICY "notif_delete_own" ON notificaciones
   FOR DELETE USING (is_superadmin() OR usuario_id = auth.uid());
 
 -- 2. Tabla de registro de horas facturables
