@@ -28,13 +28,6 @@ export const metadata: Metadata = {
     "abogados",
     "IA legal",
   ],
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'JuridIQ',
-  },
-  themeColor: '#2563eb',
 };
 
 export default function RootLayout({
@@ -44,6 +37,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${inter.variable} ${geistMono.variable}`}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2563eb" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="JuridIQ" />
+      </head>
       <body className="min-h-screen font-sans antialiased">
         {children}
       </body>
