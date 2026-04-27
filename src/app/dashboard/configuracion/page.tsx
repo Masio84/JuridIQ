@@ -304,7 +304,7 @@ export default function ConfiguracionPage() {
           className="btn btn-secondary w-full gap-2 text-blue-700 border-blue-200 hover:bg-blue-50"
         >
           <ArrowUpCircle className="w-4 h-4" />
-          Solicitar Cambio de Plan
+          Ver Planes y Solicitar Cambio
           <ChevronRight className="w-4 h-4 ml-auto" />
         </button>
         <p className="text-xs text-slate-400 mt-2 text-center">
@@ -330,8 +330,8 @@ export default function ConfiguracionPage() {
                 <>
                   <div className="flex items-center justify-between mb-5">
                     <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                      <ArrowUpCircle className="w-5 h-5 text-blue-600" />
-                      Cambiar de Plan
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                      Planes y Suscripciones
                     </h3>
                     <button onClick={() => setShowPlanModal(false)} className="p-1.5 hover:bg-slate-100 rounded-lg">
                       <X className="w-4 h-4 text-slate-500" />
@@ -339,36 +339,46 @@ export default function ConfiguracionPage() {
                   </div>
 
                   <p className="text-sm text-slate-500 mb-4">
-                    Selecciona el plan al que deseas cambiar. Se enviará una notificación al administrador para verificar tu depósito.
+                    Compara los planes disponibles. Si seleccionas uno diferente al actual, se enviará una solicitud de cambio al administrador.
                   </p>
 
                   <div className="space-y-2 mb-4">
-                    {PLANES.filter(p => p.id !== (despacho?.plan || '')).map(plan => (
-                      <label key={plan.id} className="cursor-pointer block">
-                        <input
-                          type="radio"
-                          name="plan"
-                          value={plan.id}
-                          checked={planSolicitado === plan.id}
-                          onChange={() => setPlanSolicitado(plan.id)}
-                          className="peer hidden"
-                        />
-                        <div className={cn(
-                          'flex items-center justify-between p-4 rounded-xl border-2 transition-all',
-                          planSolicitado === plan.id
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-slate-200 hover:border-slate-300'
-                        )}>
-                          <div>
-                            <div className="font-semibold text-slate-900">{plan.label}</div>
-                            <div className="text-xs text-slate-500 mt-0.5">{plan.desc}</div>
+                    {PLANES.map(plan => {
+                      const isCurrent = plan.id === (despacho?.plan || '');
+                      return (
+                        <label key={plan.id} className={cn("block", isCurrent ? "cursor-default" : "cursor-pointer")}>
+                          {!isCurrent && (
+                            <input
+                              type="radio"
+                              name="plan"
+                              value={plan.id}
+                              checked={planSolicitado === plan.id}
+                              onChange={() => setPlanSolicitado(plan.id)}
+                              className="peer hidden"
+                            />
+                          )}
+                          <div className={cn(
+                            'flex items-center justify-between p-4 rounded-xl border-2 transition-all',
+                            isCurrent
+                              ? 'border-emerald-500 bg-emerald-50'
+                              : planSolicitado === plan.id
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-slate-200 hover:border-slate-300'
+                          )}>
+                            <div>
+                              <div className="font-semibold text-slate-900 flex items-center gap-2">
+                                {plan.label}
+                                {isCurrent && <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Actual</span>}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-0.5">{plan.desc}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-slate-700">{plan.precio}</div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-bold text-blue-700">{plan.precio}</div>
-                          </div>
-                        </div>
-                      </label>
-                    ))}
+                        </label>
+                      );
+                    })}
                   </div>
 
                   <div className="mb-4">
@@ -388,15 +398,16 @@ export default function ConfiguracionPage() {
                     </p>
                   </div>
 
-                  <div className="flex gap-3">
-                    <button onClick={() => setShowPlanModal(false)} className="btn btn-secondary flex-1">Cancelar</button>
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button onClick={() => setShowPlanModal(false)} className="btn btn-secondary">
+                      Cancelar
+                    </button>
                     <button
                       onClick={handleSolicitarCambioPlan}
-                      disabled={!planSolicitado || enviandoPlan}
-                      className="btn btn-primary flex-1 gap-2"
+                      disabled={enviandoPlan || !planSolicitado || planSolicitado === despacho?.plan}
+                      className="btn btn-primary min-w-[120px]"
                     >
-                      {enviandoPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpCircle className="w-4 h-4" />}
-                      Enviar Solicitud
+                      {enviandoPlan ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Solicitar Cambio'}
                     </button>
                   </div>
                 </>

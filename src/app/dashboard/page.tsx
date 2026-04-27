@@ -134,7 +134,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900" suppressHydrationWarning>
-            {getGreeting()}, {profile?.nombre_completo.split(' ')[0]}
+            {getGreeting()}, {profile?.nombre_completo.split(' ').slice(0, 2).join(' ')}
           </h1>
           <p className="text-sm text-slate-500 mt-1" suppressHydrationWarning>
             Aquí tienes el resumen de tu despacho hoy, {formatFecha(new Date(), "EEEE dd 'de' MMMM")}.
