@@ -5,8 +5,10 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
-// Cliente admin con service_role (bypass de RLS)
+// Cliente admin con service_role (bypass de RLS) - SOLO para operaciones de servidor
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -15,10 +17,24 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
+    // SECURITY: Verificar que el userId del body corresponde al usuario autenticado
+    const cookieStore = await cookies();
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+    );
+    const { data: { session } } = await supabaseAuth.auth.getSession();
+
     const { userId, nombreDespacho, emailPrincipal } = await request.json();
 
     if (!userId || !nombreDespacho || !emailPrincipal) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+    }
+
+    // SECURITY: El userId debe coincidir con el usuario autenticado
+    if (!session || session.user.id !== userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     // 1. Crear el despacho

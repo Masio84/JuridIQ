@@ -28,6 +28,13 @@ export const metadata: Metadata = {
     "abogados",
     "IA legal",
   ],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'JuridIQ',
+  },
+  themeColor: '#2563eb',
 };
 
 export default function RootLayout({

@@ -8,6 +8,7 @@ import {
   Users,
   FolderOpen,
   CalendarDays,
+  Calendar,
   BrainCircuit,
   BookOpen,
   Settings,
@@ -15,6 +16,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldAlert,
+  Clock,
+  BarChart3,
+  FileText,
+  Bell,
 } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -24,8 +29,13 @@ const navItems = [
   { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
   { href: '/dashboard/expedientes', label: 'Expedientes', icon: FolderOpen },
   { href: '/dashboard/citas', label: 'Citas', icon: CalendarDays },
+  { href: '/dashboard/calendario', label: 'Calendario', icon: Calendar },
+  { href: '/dashboard/documentos', label: 'Documentos', icon: FileText },
+  { href: '/dashboard/horas', label: 'Horas Facturables', icon: Clock },
+  { href: '/dashboard/reportes', label: 'Reportes', icon: BarChart3 },
   { href: '/dashboard/consultas-ia', label: 'Consultar IA', icon: BrainCircuit },
   { href: '/dashboard/base-conocimiento', label: 'Base Legal', icon: BookOpen },
+  { href: '/dashboard/notificaciones', label: 'Notificaciones', icon: Bell },
 ];
 
 interface SidebarProps {
