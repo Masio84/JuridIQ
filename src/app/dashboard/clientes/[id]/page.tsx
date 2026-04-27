@@ -6,7 +6,7 @@
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft, Mail, Phone, MapPin, FileText, Calendar, Edit, FolderOpen, User, Hash, Loader2
+  ArrowLeft, Mail, Phone, MapPin, FileText, Calendar, Edit, FolderOpen, User, Hash, Loader2, Link as LinkIcon, Check
 } from 'lucide-react';
 import { cn, getInitials, formatFecha } from '@/lib/utils';
 import { ESTADO_CLIENTE_LABELS, ESTADO_CASO_LABELS, TIPO_CASO_LABELS } from '@/lib/constants';
@@ -20,6 +20,40 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
   const [cliente, setCliente] = useState<Cliente & { expedientes?: Expediente[] } | null>(null);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Portal link generation
+  const [generatingPortal, setGeneratingPortal] = useState(false);
+  const [portalCopied, setPortalCopied] = useState(false);
+
+  const handleGeneratePortal = async () => {
+    if (!cliente) return;
+    setGeneratingPortal(true);
+    try {
+      const res = await fetch('/api/portal/acceso', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cliente_id: cliente.cliente_id,
+          email_cliente: cliente.email,
+        }),
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.link) {
+        // Formato para enviar por WhatsApp o Email
+        const msg = `Hola ${cliente.nombre_completo.split(' ')[0]},\n\nPuedes acceder a tu Portal de Cliente seguro y revisar tus expedientes aquí:\n\n${data.link}\n\nO ingresa a https://juridiq.vercel.app/portal con tu email y este código: ${data.token}`;
+        await navigator.clipboard.writeText(msg);
+        setPortalCopied(true);
+        setTimeout(() => setPortalCopied(false), 3000);
+      } else {
+        alert('Error: ' + (data.error || 'No se pudo generar el enlace'));
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    } finally {
+      setGeneratingPortal(false);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -96,10 +130,21 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           </div>
-          <Link href={`/dashboard/clientes/${id}/editar`} className="btn btn-secondary btn-sm">
-            <Edit className="w-4 h-4" />
-            Editar
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleGeneratePortal}
+              disabled={generatingPortal}
+              className={cn("btn btn-sm", portalCopied ? "btn-secondary text-emerald-600 bg-emerald-50 border-emerald-200" : "btn-secondary")}
+              title="Generar enlace de acceso al portal y copiar"
+            >
+              {generatingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : portalCopied ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
+              {portalCopied ? '¡Enlace Copiado!' : 'Acceso Portal'}
+            </button>
+            <Link href={`/dashboard/clientes/${id}/editar`} className="btn btn-secondary btn-sm">
+              <Edit className="w-4 h-4" />
+              Editar
+            </Link>
+          </div>
         </div>
 
         {/* Contact info */}
