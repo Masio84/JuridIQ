@@ -11,14 +11,21 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 export default function NotificacionesPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'todas' | 'no_leidas'>('todas');
 
   useEffect(() => {
-    if (!user) return;
+    // Esperar a que la autenticación termine antes de actuar
+    if (authLoading) return;
+
+    if (!user) {
+      // Auth cargó pero no hay usuario — dejar de cargar
+      setIsLoading(false);
+      return;
+    }
 
     const loadData = async () => {
       setIsLoading(true);
@@ -34,7 +41,7 @@ export default function NotificacionesPage() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, authLoading]);
 
   const handleNotificacionClick = async (notificacion: Notificacion) => {
     if (!notificacion.leida) {
