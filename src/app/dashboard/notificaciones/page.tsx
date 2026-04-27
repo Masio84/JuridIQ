@@ -38,7 +38,7 @@ export default function NotificacionesPage() {
 
     const unsubscribe = subscribeToNotificaciones(user.id, (newNotif) => {
       setNotificaciones((prev) => [newNotif, ...prev]);
-    });
+    }, 'page');
 
     return () => unsubscribe();
   }, [user, authLoading]);

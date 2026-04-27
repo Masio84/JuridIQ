@@ -32,7 +32,7 @@ export default function Topbar({ onMenuClick, title }: TopbarProps) {
 
     const unsubscribe = subscribeToNotificaciones(user.id, (newNotif) => {
       setNotificaciones((prev) => [newNotif, ...prev].slice(0, 5));
-    });
+    }, 'topbar');
 
     return () => unsubscribe();
   }, [user]);

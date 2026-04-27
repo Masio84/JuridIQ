@@ -43,10 +43,12 @@ export async function marcarTodasLeidas(userId: string): Promise<void> {
 // Suscripción en tiempo real a nuevas notificaciones
 export function subscribeToNotificaciones(
   userId: string,
-  onNew: (notif: Notificacion) => void
+  onNew: (notif: Notificacion) => void,
+  channelSuffix = 'default'
 ) {
+  const channelName = `notificaciones-${channelSuffix}:${userId}`;
   const channel = supabase
-    .channel(`notificaciones:${userId}`)
+    .channel(channelName)
     .on(
       'postgres_changes',
       {
