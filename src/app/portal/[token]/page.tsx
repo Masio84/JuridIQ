@@ -63,63 +63,23 @@ export default function PortalClientePage({ params }: { params: { token: string 
   useEffect(() => {
     const validateToken = async () => {
       try {
-        // 1. Validar token en DB
-        const { data: acceso, error } = await supabase
-          .from('cliente_accesos')
-          .select('*')
-          .eq('token_acceso', params.token)
-          .eq('activo', true)
-          .single();
+        const res = await fetch('/api/portal/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: params.token }),
+        });
 
-        if (error || !acceso) { setStatus('unauthorized'); return; }
-
-        const accesoData = acceso as AccesoData;
-
-        // 2. Verificar expiración
-        if (accesoData.fecha_expiracion && new Date(accesoData.fecha_expiracion) < new Date()) {
+        if (!res.ok) {
           setStatus('unauthorized');
           return;
         }
 
-        // 3. Cargar datos del cliente
-        const { data: clienteData } = await supabase
-          .from('clientes')
-          .select('cliente_id, nombre_completo, email, telefono, numero_identificacion')
-          .eq('cliente_id', accesoData.cliente_id)
-          .single();
-
-        if (!clienteData) { setStatus('unauthorized'); return; }
-        setCliente(clienteData as ClienteData);
-
-        // 4. Cargar expedientes del cliente
-        const { data: exps } = await supabase
-          .from('expedientes')
-          .select('expediente_id, numero_expediente, titulo, tipo_caso, estado, fecha_inicio, descripcion, juzgado')
-          .eq('cliente_id', accesoData.cliente_id)
-          .eq('despacho_id', accesoData.despacho_id)
-          .order('fecha_inicio', { ascending: false });
-
-        setExpedientes((exps as Expediente[]) || []);
-
-        // 5. Cargar próximas citas del cliente (por email)
-        const { data: citasData } = await supabase
-          .from('citas')
-          .select('cita_id, fecha_hora, tipo_cita, estado, motivo')
-          .eq('email_cliente', accesoData.email)
-          .eq('despacho_id', accesoData.despacho_id)
-          .gte('fecha_hora', new Date().toISOString())
-          .order('fecha_hora', { ascending: true })
-          .limit(5);
-
-        setCitas((citasData as Cita[]) || []);
-
-        // 6. Nombre del despacho
-        const { data: despacho } = await supabase
-          .from('despachos')
-          .select('nombre_despacho')
-          .eq('despacho_id', accesoData.despacho_id)
-          .single();
-        setDespachoNombre(despacho?.nombre_despacho || 'Su Despacho');
+        const data = await res.json();
+        
+        setCliente(data.cliente);
+        setExpedientes(data.expedientes);
+        setCitas(data.citas);
+        setDespachoNombre(data.despachoNombre);
 
         setStatus('authenticated');
       } catch {

@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/recuperar'];
-const PUBLIC_PREFIXES = ['/agendar', '/api/auth'];
+const PUBLIC_PREFIXES = ['/agendar', '/api/auth', '/portal', '/api/portal'];
 
 // Headers de seguridad HTTP (hardening básico + intermedio)
 const SECURITY_HEADERS: Record<string, string> = {

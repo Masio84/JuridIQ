@@ -23,22 +23,15 @@ export default function PortalLoginPage() {
     setError('');
 
     try {
-      const { data: acceso, error: accessError } = await supabase
-        .from('cliente_accesos')
-        .select('*')
-        .eq('token_acceso', token.trim())
-        .eq('email', email.trim().toLowerCase())
-        .eq('activo', true)
-        .single();
+      const res = await fetch('/api/portal/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token.trim(), email: email.trim().toLowerCase() }),
+      });
 
-      if (accessError || !acceso) {
-        setError('Acceso no encontrado. Verifica tu email y código de acceso.');
-        return;
-      }
-
-      // Verificar que no haya expirado
-      if (acceso.fecha_expiracion && new Date(acceso.fecha_expiracion) < new Date()) {
-        setError('Este enlace de acceso ha expirado. Solicita uno nuevo a tu abogado.');
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Acceso no encontrado. Verifica tu email y código de acceso.');
         return;
       }
 
